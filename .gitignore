@@ -1,0 +1,33 @@
+# virtual environment
+.venv/
+venv/
+env/
+
+
+# fast f1 cache
+data/raw/fastf1_cache/
+*.sqlite
+
+# ignore generated data 
+data/processed/*
+!data/processed/.gitkeep
+
+# ignore general data file formats
+*.csv
+*.parquet
+*.json
+
+# ignore hidden autosave folders 
+.ipynb_checkpoints/
+
+# python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# os generated files
+.DS_Store
+Thumbs.db
+
+# environment variables
+.env

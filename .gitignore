@@ -5,14 +5,15 @@ env/
 
 
 # fast f1 cache
-data/raw/fastf1_cache/
-*.sqlite
+data/raw/fastf1_cache/*
+!data/raw/fastf1_cache/.gitkeep
 
 # ignore generated data 
 data/processed/*
 !data/processed/.gitkeep
 
 # ignore general data file formats
+*.sqlite
 *.csv
 *.parquet
 *.json

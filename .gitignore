@@ -25,6 +25,8 @@ data/processed/*
 __pycache__/
 *.py[cod]
 *$py.class
+*.egg-info/
+.pytest_cache/
 
 # os generated files
 .DS_Store

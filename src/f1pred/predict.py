@@ -4,7 +4,7 @@ from __future__ import annotations
 import fastf1
 import pandas as pd
 
-from f1pred import build, config, fetch
+from f1pred import build, config, fetch, probabilities
 from f1pred import model as ranker
 from f1pred.features import build_features
 
@@ -28,11 +28,15 @@ def run(season: int, event: str, refresh: bool = True) -> pd.DataFrame:
 
     train = ranker.training_rows(feats[feats["RaceIdx"] < race["RaceIdx"].iloc[0]])
     pred = ranker.predict_order(ranker.fit(train, target_era=config.era_index(season)), race)
+    temperature, n_calibration = probabilities.calibrate(feats, race["RaceIdx"].iloc[0])
+    pred = pred.join(probabilities.finish_probabilities(pred["Score"], temperature))
 
-    out = pred[["PredictedPosition", "Abbreviation", "TeamName", "Grid", "Score"]]
+    out = pred[["PredictedPosition", "Abbreviation", "TeamName", "Grid",
+                "WinPct", "PodiumPct", "PointsPct", "ExpectedPosition"]].round(1)
     out_dir = config.PROCESSED_DIR / "predictions"
     out_dir.mkdir(parents=True, exist_ok=True)
     out.to_csv(out_dir / f"{season}_R{rnd:02d}.csv", index=False)
-    print(f"\n{race['EventName'].iloc[0]} {season} — predicted finishing order")
+    print(f"\n{race['EventName'].iloc[0]} {season} — predicted finishing order "
+          f"(probability temperature {temperature:.2f}, calibrated on {n_calibration} races)")
     print(out.to_string(index=False))
     return out

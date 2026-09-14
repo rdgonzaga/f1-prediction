@@ -1,10 +1,15 @@
 """Walk-forward backtest against the grid-order baseline."""
 from __future__ import annotations
 
+from collections.abc import Iterator
+
 import pandas as pd
 
 from f1pred import config
 from f1pred import model as ranker
+from f1pred.features import FEATURE_SETS, FEATURES
+
+METRICS = ["Spearman", "WinnerHit", "PodiumHitRate", "MAE"]
 
 
 def race_metrics(actual: pd.Series, predicted: pd.Series) -> dict[str, float]:
@@ -20,27 +25,42 @@ def race_metrics(actual: pd.Series, predicted: pd.Series) -> dict[str, float]:
     }
 
 
-def backtest(feats: pd.DataFrame, season: int, start_round: int = 4) -> pd.DataFrame:
-    rows = []
-    rounds = feats.loc[(feats["Season"] == season) & feats["FinishPosition"].notna(), "RoundNumber"]
-    for rnd in sorted(r for r in rounds.unique() if r >= start_round):
-        race = ranker.training_rows(feats[(feats["Season"] == season) & (feats["RoundNumber"] == rnd)])
-        race_idx = race["RaceIdx"].iloc[0]
-        train = ranker.training_rows(feats[feats["RaceIdx"] < race_idx])
+def season_race_indices(feats: pd.DataFrame, season: int, start_round: int) -> list[int]:
+    done = feats[(feats["Season"] == season) & feats["FinishPosition"].notna() & (feats["RoundNumber"] >= start_round)]
+    return [int(i) for i in sorted(done["RaceIdx"].unique())]
 
-        model = ranker.fit(train, target_era=config.era_index(season))
-        pred = ranker.predict_order(model, race).loc[race.index]
-        base = {f"Grid{k}": v for k, v in race_metrics(race["FinishPosition"], race["Grid"]).items()}
+
+def walk_forward(feats: pd.DataFrame, race_indices: list[int], features: list[str] = FEATURES) -> Iterator[pd.DataFrame]:
+    for idx in race_indices:
+        race = ranker.training_rows(feats[feats["RaceIdx"] == idx])
+        train = ranker.training_rows(feats[feats["RaceIdx"] < idx])
+        model = ranker.fit(train, target_era=config.era_index(int(race["Season"].iloc[0])), features=features)
+        yield ranker.predict_order(model, race).loc[race.index]
+
+
+def backtest(feats: pd.DataFrame, season: int, start_round: int = 4,
+             features: list[str] = FEATURES) -> pd.DataFrame:
+    rows = []
+    for pred in walk_forward(feats, season_race_indices(feats, season, start_round), features):
+        base = {f"Grid{k}": v for k, v in race_metrics(pred["FinishPosition"], pred["Grid"]).items()}
         rows.append({
-            "Season": season, "RoundNumber": rnd, "EventName": race["EventName"].iloc[0],
-            **race_metrics(race["FinishPosition"], pred["PredictedPosition"]), **base,
+            "Season": season, "RoundNumber": int(pred["RoundNumber"].iloc[0]), "EventName": pred["EventName"].iloc[0],
+            **race_metrics(pred["FinishPosition"], pred["PredictedPosition"]), **base,
         })
     return pd.DataFrame(rows)
 
 
+def compare(feats: pd.DataFrame, season: int, start_round: int, set_names: list[str]) -> pd.DataFrame:
+    table = {}
+    for name in set_names:
+        summary = summarize(backtest(feats, season, start_round, FEATURE_SETS[name]))
+        table[name] = summary["Model"]
+    table["GridBaseline"] = summary["GridBaseline"]
+    return pd.DataFrame(table)
+
+
 def summarize(results: pd.DataFrame) -> pd.DataFrame:
-    metrics = ["Spearman", "WinnerHit", "PodiumHitRate", "MAE"]
     return pd.DataFrame({
-        "Model": [results[m].mean() for m in metrics],
-        "GridBaseline": [results[f"Grid{m}"].mean() for m in metrics],
-    }, index=metrics).round(3)
+        "Model": [results[m].mean() for m in METRICS],
+        "GridBaseline": [results[f"Grid{m}"].mean() for m in METRICS],
+    }, index=METRICS).round(3)

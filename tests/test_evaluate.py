@@ -19,3 +19,10 @@ def test_backtest_runs_on_synthetic_data():
     summary = evaluate.summarize(results)
     assert set(summary.columns) == {"Model", "GridBaseline"}
     assert results["Spearman"].between(-1, 1).all()
+
+
+def test_compare_feature_sets():
+    feats = build_features(*make_data())
+    table = evaluate.compare(feats, season=2026, start_round=3, set_names=["grid", "all"])
+    assert list(table.columns) == ["grid", "all", "GridBaseline"]
+    assert list(table.index) == ["Spearman", "WinnerHit", "PodiumHitRate", "MAE"]

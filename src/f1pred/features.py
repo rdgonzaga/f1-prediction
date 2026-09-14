@@ -22,11 +22,27 @@ FEATURES = [
     "WeekendRain", "TrackTempMean", "EraIndex", "RacesIntoEra", "NStarters",
 ]
 
+# Identical for every driver in a race, so a within-race ranker can only use them via interactions.
+RACE_CONSTANT_FEATURES = [
+    "TrkGridFinishCorr", "TrkSCRate", "WeekendRain", "TrackTempMean", "EraIndex", "RacesIntoEra", "NStarters",
+]
+
+_GRID = ["Grid", "GridPitlane"]
+_QUALI = _GRID + ["QPosition", "QGapPct", "QGapTeammatePct"]
+_PACE = _QUALI + ["LongRunPct", "LongRunRank", "LongRunTeammatePct", "LongRunLaps", "SprintPosition", "SprintGain"]
+FEATURE_SETS = {
+    "grid": _GRID,
+    "quali": _QUALI,
+    "pace": _PACE,
+    "no_race_constants": [f for f in FEATURES if f not in RACE_CONSTANT_FEATURES],
+    "all": FEATURES,
+}
+
 
 def long_run_pace(laps: pd.DataFrame) -> pd.DataFrame:
     clean = laps[
-        laps["IsAccurate"].fillna(False).astype(bool)
-        & ~laps["Deleted"].fillna(False).astype(bool)
+        laps["IsAccurate"].eq(True)
+        & ~laps["Deleted"].eq(True)
         & laps["PitInTimeSeconds"].isna()
         & laps["PitOutTimeSeconds"].isna()
         & laps["TrackStatus"].astype(str).eq("1")

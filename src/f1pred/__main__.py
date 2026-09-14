@@ -20,6 +20,9 @@ def main() -> None:
     p_back = sub.add_parser("backtest", help="Walk-forward backtest vs grid baseline")
     p_back.add_argument("--season", type=int, help="Default: latest season with results")
     p_back.add_argument("--start-round", type=int, default=4)
+    p_back.add_argument("--features", nargs="+", choices=["grid", "quali", "pace", "no_race_constants", "all"],
+                        help="Compare feature sets side by side")
+    p_back.add_argument("--probabilities", action="store_true", help="Also report win/podium calibration")
 
     p_pred = sub.add_parser("predict", help="Predict a race after qualifying")
     p_pred.add_argument("season", type=int)
@@ -37,9 +40,19 @@ def main() -> None:
         from f1pred.features import build_features
         feats = build_features(*build.load_processed())
         season = args.season or int(feats.loc[feats["FinishPosition"].notna(), "Season"].max())
-        results = evaluate.backtest(feats, season, args.start_round)
-        print(results.round(3).to_string(index=False))
-        print("\n" + evaluate.summarize(results).to_string())
+        if args.features:
+            print(evaluate.compare(feats, season, args.start_round, args.features).round(3).to_string())
+        else:
+            results = evaluate.backtest(feats, season, args.start_round)
+            print(results.round(3).to_string(index=False))
+            print("\n" + evaluate.summarize(results).to_string())
+
+        if args.probabilities:
+            from f1pred import probabilities
+            races = list(evaluate.walk_forward(feats, evaluate.season_race_indices(feats, season, args.start_round)))
+            print("\nProbability calibration (walk-forward):")
+            for name, value in probabilities.walk_forward_calibration(races).items():
+                print(f"  {name}: {value:.3f}")
 
     if args.command == "predict":
         from f1pred import predict

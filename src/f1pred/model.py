@@ -27,7 +27,7 @@ def training_rows(feats: pd.DataFrame) -> pd.DataFrame:
 
 
 def fit(train: pd.DataFrame, target_era: int | None = None,
-        era_weight: float = config.CURRENT_ERA_SAMPLE_WEIGHT) -> XGBRanker:
+        era_weight: float = config.CURRENT_ERA_SAMPLE_WEIGHT, features: list[str] = FEATURES) -> XGBRanker:
     train = train.sort_values("RaceIdx")
     starters = train.groupby("RaceIdx")["FinishPosition"].transform("count")
     label = (starters - train["FinishPosition"]).clip(lower=0).astype(int)
@@ -37,12 +37,12 @@ def fit(train: pd.DataFrame, target_era: int | None = None,
     weights = np.where(race_eras.eq(target_era), era_weight, 1.0)
 
     model = XGBRanker(**PARAMS)
-    model.fit(train[FEATURES], label, qid=train["RaceIdx"], sample_weight=weights)
+    model.fit(train[features], label, qid=train["RaceIdx"], sample_weight=weights)
     return model
 
 
 def predict_order(model: XGBRanker, race: pd.DataFrame) -> pd.DataFrame:
     out = race.copy()
-    out["Score"] = model.predict(out[FEATURES])
+    out["Score"] = model.predict(out[list(model.feature_names_in_)])
     out["PredictedPosition"] = out["Score"].rank(ascending=False, method="first").astype(int)
     return out.sort_values("PredictedPosition")

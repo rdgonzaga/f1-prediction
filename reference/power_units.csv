@@ -1,0 +1,52 @@
+Season,TeamId,PowerUnit,PowerUnitName
+2022,alfa,ferrari,Ferrari 066/7
+2022,alphatauri,honda_rbpt,Red Bull RBPTH001
+2022,alpine,renault,Renault E-Tech RE22
+2022,aston_martin,mercedes,Mercedes-AMG F1 M13
+2022,ferrari,ferrari,Ferrari 066/7
+2022,haas,ferrari,Ferrari 066/7
+2022,mclaren,mercedes,Mercedes-AMG F1 M13
+2022,mercedes,mercedes,Mercedes-AMG F1 M13
+2022,red_bull,honda_rbpt,Red Bull RBPTH001
+2022,williams,mercedes,Mercedes-AMG F1 M13
+2023,alfa,ferrari,Ferrari 066/10
+2023,alphatauri,honda_rbpt,Honda RBPTH001
+2023,alpine,renault,Renault E-Tech RE23
+2023,aston_martin,mercedes,Mercedes-AMG F1 M14
+2023,ferrari,ferrari,Ferrari 066/10
+2023,haas,ferrari,Ferrari 066/10
+2023,mclaren,mercedes,Mercedes-AMG F1 M14
+2023,mercedes,mercedes,Mercedes-AMG F1 M14
+2023,red_bull,honda_rbpt,Honda RBPTH001
+2023,williams,mercedes,Mercedes-AMG F1 M14
+2024,alpine,renault,Renault E-Tech RE24
+2024,aston_martin,mercedes,Mercedes-AMG F1 M15
+2024,ferrari,ferrari,Ferrari 066/12
+2024,haas,ferrari,Ferrari 066/10
+2024,mclaren,mercedes,Mercedes-AMG F1 M15
+2024,mercedes,mercedes,Mercedes-AMG F1 M15
+2024,rb,honda_rbpt,Honda RBPTH002
+2024,red_bull,honda_rbpt,Honda RBPTH002
+2024,sauber,ferrari,Ferrari 066/12
+2024,williams,mercedes,Mercedes-AMG F1 M15
+2025,alpine,renault,Renault E-Tech RE25
+2025,aston_martin,mercedes,Mercedes-AMG F1 M16
+2025,ferrari,ferrari,Ferrari 066/15
+2025,haas,ferrari,Ferrari 066/15
+2025,mclaren,mercedes,Mercedes-AMG F1 M16
+2025,mercedes,mercedes,Mercedes-AMG F1 M16
+2025,rb,honda_rbpt,Honda RBPTH003
+2025,red_bull,honda_rbpt,Honda RBPTH003
+2025,sauber,ferrari,Ferrari 066/15
+2025,williams,mercedes,Mercedes-AMG F1 M16
+2026,alpine,mercedes,Mercedes-AMG F1 M17
+2026,aston_martin,honda,Honda RA626H
+2026,audi,audi,Audi AFR 26 Hybrid
+2026,cadillac,ferrari,Ferrari 067/6
+2026,ferrari,ferrari,Ferrari 067/6
+2026,haas,ferrari,Ferrari 067/6
+2026,mclaren,mercedes,Mercedes-AMG F1 M17
+2026,mercedes,mercedes,Mercedes-AMG F1 M17
+2026,rb,red_bull_ford,Red Bull Ford DM01
+2026,red_bull,red_bull_ford,Red Bull Ford DM01
+2026,williams,mercedes,Mercedes-AMG F1 M17

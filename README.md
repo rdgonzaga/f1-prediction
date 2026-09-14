@@ -29,6 +29,8 @@ FastF1 limits API calls to 500 per hour, so a full fetch takes a few hours. Re-r
 ## Future seasons
 Seasons run from 2022 to the current year automatically. When a new regulation era begins (next expected 2031), add its first year to `ERA_STARTS` in `src/f1pred/config.py`. Races from the same era as the predicted race get 3× training weight.
 
+Before each new season, add one row per team to `reference/power_units.csv` (engine supplier). `build` warns about any team missing from it.
+
 ## Storage
 Telemetry is never loaded. Car and position data were ~97% of the old cache (992 MB for 6 sessions). Each session is saved as compact parquet, and the event's FastF1 cache is deleted afterwards. The full dataset is expected to stay under ~300 MB.
 

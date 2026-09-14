@@ -17,6 +17,7 @@ data/processed/*
 *.csv
 *.parquet
 *.json
+!reference/*.csv
 
 # ignore hidden autosave folders 
 .ipynb_checkpoints/

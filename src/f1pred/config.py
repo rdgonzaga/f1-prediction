@@ -8,6 +8,8 @@ RAW_DIR = DATA_DIR / "raw"
 PROCESSED_DIR = DATA_DIR / "processed"
 CACHE_DIR = RAW_DIR / "fastf1_cache"
 LOG_PATH = RAW_DIR / "extraction_log.csv"
+# One row per team per season; add the new season's rows before its first race.
+POWER_UNITS_PATH = PROJECT_ROOT / "reference" / "power_units.csv"
 
 FIRST_SEASON = 2022
 

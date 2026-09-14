@@ -90,7 +90,12 @@ def quality_report(entries: pd.DataFrame) -> None:
     print("Null %:", nulls.to_dict())
 
 
-def data_checks(entries: pd.DataFrame, conditions: pd.DataFrame, laps: pd.DataFrame) -> list[str]:
+def load_power_units() -> pd.DataFrame:
+    return pd.read_csv(config.POWER_UNITS_PATH)
+
+
+def data_checks(entries: pd.DataFrame, conditions: pd.DataFrame, laps: pd.DataFrame,
+                power_units: pd.DataFrame | None = None) -> list[str]:
     issues = []
     per_race = entries.groupby(RACE_KEYS).agg(
         EventName=("EventName", "first"),
@@ -120,6 +125,12 @@ def data_checks(entries: pd.DataFrame, conditions: pd.DataFrame, laps: pd.DataFr
         if len(locations) > 1 and event not in config.DIFFERENT_VENUES:
             issues.append(f"{event}: held at {', '.join(sorted(locations))}; "
                           "add LOCATION_ALIASES in config if these are the same track")
+
+    if power_units is not None:
+        listed = set(map(tuple, power_units[["Season", "TeamId"]].to_numpy()))
+        for season, team in entries[["Season", "TeamId"]].dropna().drop_duplicates().itertuples(index=False):
+            if (season, team) not in listed:
+                issues.append(f"{season} {team}: no power unit in {config.POWER_UNITS_PATH.name}")
     return issues
 
 
@@ -140,7 +151,7 @@ def run() -> None:
     laps.to_parquet(config.PROCESSED_DIR / "laps.parquet", index=False)
     print(f"entries={len(entries)} conditions={len(conditions)} laps={len(laps)}")
     quality_report(entries)
-    issues = data_checks(entries, conditions, laps)
+    issues = data_checks(entries, conditions, laps, load_power_units())
     print(f"Data checks: {len(issues)} issue(s)" if issues else "Data checks: OK")
     for issue in issues:
         print(f"  - {issue}")

@@ -14,11 +14,13 @@ pip install -e .
 ```
 python -m f1pred fetch                      # 2022 → current year, newest first, resumable
 python -m f1pred fetch --seasons 2026 2025  # fetch in this order
-python -m f1pred build                      # combine into data/processed
+python -m f1pred build                      # combine into data/processed, run data checks
 python -m f1pred backtest                   # walk-forward on latest season vs grid order
-python -m f1pred predict 2026 Singapore     # after qualifying
+python -m f1pred backtest --features grid quali pace all --probabilities
+python -m f1pred predict 2026 Singapore     # after qualifying: fetch weekend, rebuild, predict
 pytest
 ```
+`predict` prints the favourite and likely podium, plus win, podium, points and DNF chances for every driver. It saves `data/processed/predictions/<season>_R<round>.csv` and a `.md` summary.
 FastF1 limits API calls to 500 per hour, so a full fetch takes a few hours. Re-running skips sessions that are already done and re-fetches any saved without race control messages. Each race weekend, `fetch` only downloads the new sessions.
 
 ## Future seasons
@@ -31,6 +33,7 @@ Telemetry is never loaded. Car and position data were ~97% of the old cache (992
 - **Data:** 2022–2026 practice, qualifying, sprint and race sessions.
 - **2026 regulations:** team pecking orders reset, so features are relative and carry across eras: grid, quali gap to pole and teammate, long-run practice pace, within-season driver/team form, career driver traits, and track overtaking difficulty. Same-era races get 3× weight.
 - **Model:** `XGBRanker` (pairwise), grouped by race.
+- **Probabilities:** each race is simulated 20,000 times from the ranker scores (Plackett-Luce). The spread is fitted on how the top 3 finished, and a logistic DNF model sends retirements to the back.
 - **Validation:** walk-forward over 2026 rounds, reported next to the grid-order baseline (Spearman, winner hit, podium hit rate, position MAE).
 - **Leakage:** features only use earlier races plus the same weekend's pre-race sessions (see `tests/test_features.py`).
 

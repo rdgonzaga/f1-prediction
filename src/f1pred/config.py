@@ -36,6 +36,9 @@ LOCATION_ALIASES = {
     "monte carlo": "monaco",
 }
 
+# Events confirmed to have moved to a different track (not just renamed).
+DIFFERENT_VENUES = {"Spanish Grand Prix"}
+
 MAX_RETRIES = 3
 RETRY_SLEEP_SECONDS = 2
 # FastF1 caps all API calls at 500/hour.

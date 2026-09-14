@@ -8,6 +8,7 @@ import pandas as pd
 from f1pred import config
 
 RACE_KEYS = ["Season", "RoundNumber"]
+MIN_ENTRIES = 18
 LAP_SESSIONS = ["FP1", "FP2", "FP3", "S"]
 LAP_COLS = [
     "Season", "RoundNumber", "SessionCode", "Driver", "Team", "LapNumber", "Stint",
@@ -89,6 +90,39 @@ def quality_report(entries: pd.DataFrame) -> None:
     print("Null %:", nulls.to_dict())
 
 
+def data_checks(entries: pd.DataFrame, conditions: pd.DataFrame, laps: pd.DataFrame) -> list[str]:
+    issues = []
+    per_race = entries.groupby(RACE_KEYS).agg(
+        EventName=("EventName", "first"),
+        Entries=("DriverId", "size"),
+        HasQuali=("QPosition", lambda s: s.notna().any()),
+        HasResult=("FinishPosition", lambda s: s.notna().any()),
+    )
+    lap_races = set(map(tuple, laps[RACE_KEYS].drop_duplicates().to_numpy()))
+    condition_races = set(map(tuple, conditions[RACE_KEYS].drop_duplicates().to_numpy()))
+    latest = per_race.index.max()
+
+    for (season, rnd), race in per_race.iterrows():
+        label = f"{season} R{rnd:02d} {race['EventName']}"
+        if race["Entries"] < MIN_ENTRIES:
+            issues.append(f"{label}: only {race['Entries']} entries")
+        if not race["HasQuali"]:
+            issues.append(f"{label}: no qualifying results")
+        # The latest race may simply not have happened yet.
+        if not race["HasResult"] and (season, rnd) != latest:
+            issues.append(f"{label}: no race results")
+        if (season, rnd) not in lap_races:
+            issues.append(f"{label}: no practice or sprint laps")
+        if (season, rnd) not in condition_races:
+            issues.append(f"{label}: no weather or track status")
+
+    for event, locations in entries.groupby("EventName")["Location"].unique().items():
+        if len(locations) > 1 and event not in config.DIFFERENT_VENUES:
+            issues.append(f"{event}: held at {', '.join(sorted(locations))}; "
+                          "add LOCATION_ALIASES in config if these are the same track")
+    return issues
+
+
 def load_processed() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     return tuple(pd.read_parquet(config.PROCESSED_DIR / f"{name}.parquet")
                  for name in ["entries", "laps", "conditions"])
@@ -106,3 +140,7 @@ def run() -> None:
     laps.to_parquet(config.PROCESSED_DIR / "laps.parquet", index=False)
     print(f"entries={len(entries)} conditions={len(conditions)} laps={len(laps)}")
     quality_report(entries)
+    issues = data_checks(entries, conditions, laps)
+    print(f"Data checks: {len(issues)} issue(s)" if issues else "Data checks: OK")
+    for issue in issues:
+        print(f"  - {issue}")

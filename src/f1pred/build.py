@@ -1,6 +1,8 @@
 """Combine raw session parquet into processed tables."""
 from __future__ import annotations
 
+import unicodedata
+
 import pandas as pd
 
 from f1pred import config
@@ -19,6 +21,11 @@ def _read(table: str) -> pd.DataFrame:
     if not files:
         return pd.DataFrame()
     return pd.concat([pd.read_parquet(f) for f in files], ignore_index=True)
+
+
+def normalize_location(name: str) -> str:
+    key = unicodedata.normalize("NFKD", str(name)).encode("ascii", "ignore").decode().strip().lower()
+    return config.LOCATION_ALIASES.get(key, key)
 
 
 def build_entries(results: pd.DataFrame) -> pd.DataFrame:
@@ -51,6 +58,7 @@ def build_entries(results: pd.DataFrame) -> pd.DataFrame:
     for col in event_cols[2:] + driver_cols[1:]:
         entries[col] = entries[col].fillna(entries.pop(f"{col}_r"))
     entries = entries.merge(sprint, on=keys, how="left")
+    entries["Location"] = entries["Location"].map(normalize_location)
     return entries.sort_values(RACE_KEYS + ["QPosition"]).reset_index(drop=True)
 
 

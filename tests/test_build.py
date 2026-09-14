@@ -1,7 +1,13 @@
 import numpy as np
 import pandas as pd
 
-from f1pred.build import build_entries
+from f1pred.build import build_entries, normalize_location
+
+
+def test_location_aliases_and_accents_match_across_seasons():
+    assert normalize_location("Miami Gardens") == normalize_location("Miami")
+    assert normalize_location("Monte Carlo") == normalize_location("Monaco")
+    assert normalize_location("Montréal") == "montreal"
 
 
 def result_row(session, number, driver_id, position, grid=np.nan):

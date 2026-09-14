@@ -15,6 +15,9 @@ FIRST_SEASON = 2022
 ERA_STARTS = [2022, 2026]
 CURRENT_ERA_SAMPLE_WEIGHT = 3.0
 
+# Win/podium probability spread is fitted on the order of the first k finishers only.
+CALIBRATION_TOP_K = 3
+
 # Sprint formats vary by year, so sessions are read from each event's schedule.
 SESSION_CODES = {
     "Practice 1": "FP1",
@@ -25,6 +28,12 @@ SESSION_CODES = {
     "Sprint Qualifying": "SQ",
     "Sprint": "S",
     "Race": "R",
+}
+
+# FastF1 renames some locations between seasons; keys are accent-stripped lowercase.
+LOCATION_ALIASES = {
+    "miami gardens": "miami",
+    "monte carlo": "monaco",
 }
 
 MAX_RETRIES = 3

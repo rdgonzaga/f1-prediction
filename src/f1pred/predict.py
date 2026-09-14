@@ -18,6 +18,38 @@ def resolve_round(season: int, event: str) -> int:
     return int(fastf1.get_event(season, event)["RoundNumber"])
 
 
+def parse_penalties(items: list[str] | None) -> dict[str, int]:
+    penalties = {}
+    for item in items or []:
+        driver, sep, places = item.partition("=")
+        if not sep or not places.isdigit():
+            raise SystemExit(f"Bad penalty '{item}', expected e.g. VER=5")
+        penalties[driver.upper()] = int(places)
+    return penalties
+
+
+def apply_grid_penalties(race: pd.DataFrame, penalties: dict[str, int], pitlane: set[str]) -> pd.Series:
+    """Grid slots after place penalties; pit lane starters get 0."""
+    unknown = (set(penalties) | pitlane) - set(race["Abbreviation"])
+    if unknown:
+        raise SystemExit(f"Unknown driver(s) {sorted(unknown)}; entries are {sorted(race['Abbreviation'])}")
+    quali = race["QPosition"].fillna(race["QPosition"].max() + 1)
+    ranked = race.assign(
+        Target=quali + race["Abbreviation"].map(penalties).fillna(0),
+        Penalised=race["Abbreviation"].isin(penalties),
+        Quali=quali,
+    )
+    starters = ranked[~ranked["Abbreviation"].isin(pitlane)].sort_values(["Target", "Penalised", "Quali"])
+    grid = pd.Series(0.0, index=race.index)
+    grid.loc[starters.index] = range(1, len(starters) + 1)
+    return grid
+
+
+def describe_overrides(penalties: dict[str, int], pitlane: set[str]) -> str:
+    parts = [f"{d} +{p}" for d, p in penalties.items()] + [f"{d} pit lane" for d in sorted(pitlane)]
+    return "Grid overrides: " + ", ".join(parts) if parts else ""
+
+
 def markdown_table(df: pd.DataFrame) -> str:
     header = "| " + " | ".join(df.columns) + " |"
     divider = "|" + "|".join("---" for _ in df.columns) + "|"
@@ -32,13 +64,19 @@ def headline(out: pd.DataFrame) -> str:
             f"Most likely podium: {podium}")
 
 
-def run(season: int, event: str, refresh: bool = True) -> pd.DataFrame:
+def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int] | None = None,
+        pitlane: list[str] | None = None) -> pd.DataFrame:
     rnd = resolve_round(season, event)
     if refresh:
         fetch.run([season], rounds=[rnd])
         build.run()
 
+    penalties = penalties or {}
+    pitlane = {d.upper() for d in pitlane or []}
     entries, laps, conditions = build.load_processed()
+    target = (entries["Season"] == season) & (entries["RoundNumber"] == rnd)
+    if penalties or pitlane:
+        entries.loc[target, "GridPosition"] = apply_grid_penalties(entries[target], penalties, pitlane)
     feats = build_features(entries, laps, conditions)
     race = feats[(feats["Season"] == season) & (feats["RoundNumber"] == rnd)]
     if race.empty or race["QPosition"].isna().all():
@@ -60,8 +98,17 @@ def run(season: int, event: str, refresh: bool = True) -> pd.DataFrame:
     out_dir = config.PROCESSED_DIR / "predictions"
     out_dir.mkdir(parents=True, exist_ok=True)
     stem = out_dir / f"{season}_R{rnd:02d}"
-    out.to_csv(stem.with_suffix(".csv"), index=False)
+    overrides = describe_overrides(penalties, pitlane)
+    pre_race = not race["FinishPosition"].notna().any()
+    out.assign(
+        DriverId=pred["DriverId"],
+        PreRace=pre_race,
+        PredictedAtUTC=pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d %H:%M:%S"),
+        GridOverrides=overrides,
+    ).to_csv(stem.with_suffix(".csv"), index=False)
     summary = [f"# {event_name} {season}", "", headline(out), ""]
+    summary += [] if pre_race else ["_Made after the race result was known (not counted by `score`)._", ""]
+    summary += [overrides, ""] if overrides else []
     summary += [f"> Warning: {w}" for w in warnings] + ([""] if warnings else [])
     summary += [markdown_table(out), "",
                 f"Probability temperature {temperature:.2f}, calibrated on {n_calibration} races."]
@@ -71,6 +118,8 @@ def run(season: int, event: str, refresh: bool = True) -> pd.DataFrame:
           f"(probability temperature {temperature:.2f}, calibrated on {n_calibration} races)")
     for w in warnings:
         print(f"Warning: {w}")
+    if overrides:
+        print(overrides)
     print(headline(out))
     print(out.to_string(index=False))
     print(f"\nSaved {stem.with_suffix('.csv').name} and {stem.with_suffix('.md').name} to {out_dir}")

@@ -18,8 +18,11 @@ python -m f1pred build                      # combine into data/processed, run d
 python -m f1pred backtest                   # walk-forward on latest season vs grid order
 python -m f1pred backtest --features grid quali pace all --probabilities
 python -m f1pred predict 2026 Singapore     # after qualifying: fetch weekend, rebuild, predict
+python -m f1pred predict 2026 Singapore --penalty VER=5 --pitlane STR
+python -m f1pred score --refresh            # after the race: compare saved predictions with results
 pytest
 ```
+`score` only counts predictions saved before the race result existed. `--include-backfilled` adds the others.
 `predict` prints the favourite and likely podium, plus win, podium, points and DNF chances for every driver. It saves `data/processed/predictions/<season>_R<round>.csv` and a `.md` summary.
 FastF1 limits API calls to 500 per hour, so a full fetch takes a few hours. Re-running skips sessions that are already done and re-fetches any saved without race control messages. Each race weekend, `fetch` only downloads the new sessions.
 

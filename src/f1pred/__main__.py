@@ -2,6 +2,7 @@
 import argparse
 
 from f1pred import config
+from f1pred.features import FEATURE_SETS
 
 
 def main() -> None:
@@ -20,7 +21,7 @@ def main() -> None:
     p_back = sub.add_parser("backtest", help="Walk-forward backtest vs grid baseline")
     p_back.add_argument("--season", type=int, help="Default: latest season with results")
     p_back.add_argument("--start-round", type=int, default=4)
-    p_back.add_argument("--features", nargs="+", choices=["grid", "quali", "pace", "no_race_constants", "all"],
+    p_back.add_argument("--features", nargs="+", choices=list(FEATURE_SETS),
                         help="Compare feature sets side by side")
     p_back.add_argument("--probabilities", action="store_true", help="Also report win/podium calibration")
 
@@ -28,8 +29,19 @@ def main() -> None:
     p_pred.add_argument("season", type=int)
     p_pred.add_argument("event", help="Round number or event name, e.g. Singapore")
     p_pred.add_argument("--no-refresh", action="store_true", help="Skip fetch/build")
+    p_pred.add_argument("--penalty", nargs="+", metavar="DRIVER=PLACES", help="Grid place penalties, e.g. VER=5 NOR=3")
+    p_pred.add_argument("--pitlane", nargs="+", metavar="DRIVER", help="Pit lane starters, e.g. STR")
+
+    p_score = sub.add_parser("score", help="Score saved predictions against race results")
+    p_score.add_argument("--season", type=int)
+    p_score.add_argument("--refresh", action="store_true", help="Fetch results for predicted races first")
+    p_score.add_argument("--include-backfilled", action="store_true", help="Also score predictions made after the race")
 
     args = parser.parse_args()
+
+    if args.command == "score":
+        from f1pred import score
+        score.run(args.season, args.refresh, args.include_backfilled)
 
     if args.command == "build":
         from f1pred import build
@@ -56,7 +68,8 @@ def main() -> None:
 
     if args.command == "predict":
         from f1pred import predict
-        predict.run(args.season, args.event, refresh=not args.no_refresh)
+        predict.run(args.season, args.event, refresh=not args.no_refresh,
+                    penalties=predict.parse_penalties(args.penalty), pitlane=args.pitlane)
 
     if args.command == "fetch":
         from f1pred import fetch

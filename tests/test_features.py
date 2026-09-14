@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pandas.testing as pdt
+import pytest
 
 from f1pred.features import CONDITION_OUTCOME_COLS, FEATURES, OUTCOME_COLS, build_features, long_run_pace
 
@@ -79,6 +80,21 @@ def test_first_race_has_no_history():
     feats = build_features(entries, laps, conditions)
     first = feats[(feats["Season"] == 2024) & (feats["RoundNumber"] == 1)]
     assert first[["DrvFinishLast3", "DrvGainCareer", "TrkSCRate", "TeamBestFinishLast3"]].isna().all().all()
+
+
+def test_long_run_degradation_ranks_drivers_by_relative_slope():
+    slopes = {"AAA": 0.02, "BBB": 0.05, "CCC": 0.10, "DDD": 0.15}
+    laps = pd.DataFrame([{
+        "Season": 2026, "RoundNumber": 1, "SessionCode": "FP2", "Driver": driver, "Team": "t",
+        "LapNumber": float(lap), "Stint": 1.0, "Compound": "MEDIUM", "TyreLife": float(lap),
+        "LapTimeSeconds": 90 + slope * lap, "PitInTimeSeconds": np.nan,
+        "PitOutTimeSeconds": 10.0 if lap == 1 else np.nan, "TrackStatus": "1", "IsAccurate": True, "Deleted": False,
+    } for driver, slope in slopes.items() for lap in range(1, 9)])
+
+    deg = long_run_pace(laps).set_index("Abbreviation")["LongRunDeg"]
+    median = np.median(list(slopes.values()))
+    for driver, slope in slopes.items():
+        assert deg[driver] == pytest.approx(slope - median, abs=1e-9)
 
 
 def test_long_run_pace_excludes_out_laps_and_short_stints():

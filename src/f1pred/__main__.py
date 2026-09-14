@@ -51,7 +51,7 @@ def main() -> None:
             from f1pred import probabilities
             races = list(evaluate.walk_forward(feats, evaluate.season_race_indices(feats, season, args.start_round)))
             print("\nProbability calibration (walk-forward):")
-            for name, value in probabilities.walk_forward_calibration(races).items():
+            for name, value in probabilities.walk_forward_calibration(races, feats).items():
                 print(f"  {name}: {value:.3f}")
 
     if args.command == "predict":

@@ -29,6 +29,7 @@ RACE_CONSTANT_FEATURES = [
 
 # Candidate features kept out of FEATURES until a full-data backtest shows they help.
 DEG_FEATURES = ["LongRunDeg", "LongRunDegRank"]
+PU_FEATURES = ["PuQPosLast3", "PuFinishLast3"]
 
 _GRID = ["Grid", "GridPitlane"]
 _QUALI = _GRID + ["QPosition", "QGapPct", "QGapTeammatePct"]
@@ -38,9 +39,11 @@ FEATURE_SETS = {
     "quali": _QUALI,
     "pace": _PACE,
     "pace_deg": _PACE + DEG_FEATURES,
+    "pace_pu": _PACE + PU_FEATURES,
     "no_race_constants": [f for f in FEATURES if f not in RACE_CONSTANT_FEATURES],
     "all": FEATURES,
     "all_deg": FEATURES + DEG_FEATURES,
+    "all_pu": FEATURES + PU_FEATURES,
 }
 
 
@@ -114,7 +117,10 @@ def _per_race_history(race_level: pd.DataFrame, by: list[str], cols: dict[str, t
     return out
 
 
-def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.DataFrame) -> pd.DataFrame:
+def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.DataFrame,
+                   power_units: pd.DataFrame | None = None) -> pd.DataFrame:
+    if power_units is None:
+        power_units = pd.read_csv(config.POWER_UNITS_PATH)
     df = entries.copy()
     df["RaceIdx"] = _race_order(df)
     df = df.sort_values(["RaceIdx", "QPosition"]).reset_index(drop=True)
@@ -159,6 +165,13 @@ def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.Dat
         "TeamBestFinishLast3": ("BestFinish", 3), "TeamQPosLast3": ("MeanQPos", 3)})
     df = df.merge(team_hist, on=RACE_KEYS + ["TeamId"], how="left")
 
+    df = df.merge(power_units[["Season", "TeamId", "PowerUnit"]], on=["Season", "TeamId"], how="left")
+    pu_race = df.groupby(RACE_KEYS + ["RaceIdx", "PowerUnit"]).agg(
+        MeanQPos=("QPosition", "mean"), MeanFinish=("FinishPosition", "mean")).reset_index()
+    pu_hist = _per_race_history(pu_race, ["Season", "PowerUnit"], {
+        "PuQPosLast3": ("MeanQPos", 3), "PuFinishLast3": ("MeanFinish", 3)})
+    df = df.merge(pu_hist, on=RACE_KEYS + ["PowerUnit"], how="left")
+
     def grid_finish_corr(g: pd.DataFrame) -> float:
         g = g.dropna(subset=["Grid", "FinishPosition"])
         return g["Grid"].corr(g["FinishPosition"], method="spearman") if len(g) > 2 else np.nan
@@ -178,6 +191,6 @@ def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.Dat
     df["RacesIntoEra"] = (df["RaceIdx"] - era_first_idx).astype(float)
 
     df = df.sort_values(["RaceIdx", "QPosition"]).reset_index(drop=True)
-    for col in FEATURES + DEG_FEATURES:
+    for col in FEATURES + DEG_FEATURES + PU_FEATURES:
         df[col] = pd.to_numeric(df[col], errors="coerce").astype(float)
     return df

@@ -3,10 +3,17 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 
-from f1pred.features import CONDITION_OUTCOME_COLS, FEATURES, OUTCOME_COLS, build_features, long_run_pace
+from f1pred.features import (
+    CONDITION_OUTCOME_COLS, FEATURES, OUTCOME_COLS, PU_FEATURES, build_features, long_run_pace,
+)
 
 TEAMS = ["red", "blue", "green"]
 LOCATIONS = ["Sakhir", "Jeddah", "Melbourne", "Suzuka"]
+POWER_UNITS = pd.DataFrame([
+    {"Season": season, "TeamId": team, "PowerUnit": "pu_b" if team == "green" or (team == "blue" and season == 2026)
+     else "pu_a"}
+    for season in [2024, 2025, 2026] for team in TEAMS
+])
 
 
 def make_data(seed: int = 0):
@@ -49,7 +56,7 @@ def test_features_do_not_use_target_race_outcome():
     entries, laps, conditions = make_data()
     target = (2026, 3)
 
-    full = build_features(entries, laps, conditions)
+    full = build_features(entries, laps, conditions, POWER_UNITS)
 
     keep = (entries["Season"] * 100 + entries["RoundNumber"]) <= target[0] * 100 + target[1]
     truncated = entries[keep].copy()
@@ -58,11 +65,11 @@ def test_features_do_not_use_target_race_outcome():
     cond = conditions.copy()
     cond_target = (cond["Season"] == target[0]) & (cond["RoundNumber"] == target[1])
     cond.loc[cond_target, CONDITION_OUTCOME_COLS] = np.nan
-    blind = build_features(truncated, laps, cond)
+    blind = build_features(truncated, laps, cond, POWER_UNITS)
 
     def pick(df):
         rows = df[(df["Season"] == target[0]) & (df["RoundNumber"] == target[1])]
-        return rows.sort_values("DriverId")[["DriverId"] + FEATURES].reset_index(drop=True)
+        return rows.sort_values("DriverId")[["DriverId"] + FEATURES + PU_FEATURES].reset_index(drop=True)
 
     pdt.assert_frame_equal(pick(full), pick(blind))
 
@@ -80,6 +87,25 @@ def test_first_race_has_no_history():
     feats = build_features(entries, laps, conditions)
     first = feats[(feats["Season"] == 2024) & (feats["RoundNumber"] == 1)]
     assert first[["DrvFinishLast3", "DrvGainCareer", "TrkSCRate", "TeamBestFinishLast3"]].isna().all().all()
+
+
+def test_power_unit_form_averages_prior_races_of_all_cars_with_that_pu():
+    entries, laps, conditions = make_data()
+    feats = build_features(entries, laps, conditions, POWER_UNITS)
+
+    def expected(season, rnd, pu, col):
+        teams = POWER_UNITS[(POWER_UNITS["Season"] == season) & (POWER_UNITS["PowerUnit"] == pu)]["TeamId"]
+        prior = entries[(entries["Season"] == season) & entries["RoundNumber"].between(rnd - 3, rnd - 1)
+                        & entries["TeamId"].isin(teams)]
+        return prior.groupby("RoundNumber")[col].mean().mean()
+
+    for season, rnd, team, pu in [(2025, 4, "red", "pu_a"), (2026, 3, "blue", "pu_b"), (2026, 2, "green", "pu_b")]:
+        row = feats[(feats["Season"] == season) & (feats["RoundNumber"] == rnd) & (feats["TeamId"] == team)].iloc[0]
+        assert row["PuQPosLast3"] == pytest.approx(expected(season, rnd, pu, "QPosition"))
+        assert row["PuFinishLast3"] == pytest.approx(expected(season, rnd, pu, "FinishPosition"))
+
+    season_start = feats[feats["RoundNumber"] == 1]
+    assert season_start[PU_FEATURES].isna().all().all()
 
 
 def test_long_run_degradation_ranks_drivers_by_relative_slope():

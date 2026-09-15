@@ -30,6 +30,7 @@ RACE_CONSTANT_FEATURES = [
 # Candidate features kept out of FEATURES until a full-data backtest shows they help.
 DEG_FEATURES = ["LongRunDeg", "LongRunDegRank"]
 PU_FEATURES = ["PuQPosLast3", "PuFinishLast3"]
+PENALTY_FEATURES = ["GridMinusQuali"]
 
 _GRID = ["Grid", "GridPitlane"]
 _QUALI = _GRID + ["QPosition", "QGapPct", "QGapTeammatePct"]
@@ -44,6 +45,8 @@ FEATURE_SETS = {
     "all": FEATURES,
     "all_deg": FEATURES + DEG_FEATURES,
     "all_pu": FEATURES + PU_FEATURES,
+    "quali_pen": _QUALI + PENALTY_FEATURES,
+    "all_pen": FEATURES + PENALTY_FEATURES,
 }
 
 
@@ -129,6 +132,7 @@ def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.Dat
     df["Grid"] = df["GridPosition"].fillna(df["QPosition"])
     df["GridPitlane"] = df["Grid"].eq(0).astype(float)
     df.loc[df["Grid"].eq(0), "Grid"] = df["NStarters"]
+    df["GridMinusQuali"] = df["Grid"] - df["QPosition"]
 
     df["QGapPct"] = (df["QBestSeconds"] / df.groupby(RACE_KEYS)["QBestSeconds"].transform("min") - 1) * 100
     df["QGapTeammatePct"] = _teammate_gap(df, "QBestSeconds")
@@ -191,6 +195,6 @@ def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.Dat
     df["RacesIntoEra"] = (df["RaceIdx"] - era_first_idx).astype(float)
 
     df = df.sort_values(["RaceIdx", "QPosition"]).reset_index(drop=True)
-    for col in FEATURES + DEG_FEATURES + PU_FEATURES:
+    for col in FEATURES + DEG_FEATURES + PU_FEATURES + PENALTY_FEATURES:
         df[col] = pd.to_numeric(df[col], errors="coerce").astype(float)
     return df

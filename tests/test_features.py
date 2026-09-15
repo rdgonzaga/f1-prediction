@@ -4,7 +4,7 @@ import pandas.testing as pdt
 import pytest
 
 from f1pred.features import (
-    CONDITION_OUTCOME_COLS, FEATURES, OUTCOME_COLS, PU_FEATURES, build_features, long_run_pace,
+    CONDITION_OUTCOME_COLS, FEATURES, OUTCOME_COLS, PENALTY_FEATURES, PU_FEATURES, build_features, long_run_pace,
 )
 
 TEAMS = ["red", "blue", "green"]
@@ -69,7 +69,7 @@ def test_features_do_not_use_target_race_outcome():
 
     def pick(df):
         rows = df[(df["Season"] == target[0]) & (df["RoundNumber"] == target[1])]
-        return rows.sort_values("DriverId")[["DriverId"] + FEATURES + PU_FEATURES].reset_index(drop=True)
+        return rows.sort_values("DriverId")[["DriverId"] + FEATURES + PU_FEATURES + PENALTY_FEATURES].reset_index(drop=True)
 
     pdt.assert_frame_equal(pick(full), pick(blind))
 
@@ -106,6 +106,23 @@ def test_power_unit_form_averages_prior_races_of_all_cars_with_that_pu():
 
     season_start = feats[feats["RoundNumber"] == 1]
     assert season_start[PU_FEATURES].isna().all().all()
+
+
+def test_grid_minus_quali_reflects_penalties_and_pit_lane():
+    entries, laps, conditions = make_data()
+    race = (entries["Season"] == 2026) & (entries["RoundNumber"] == 2)
+    penalised = race & entries["QPosition"].eq(1)
+    pitlane = race & entries["QPosition"].eq(3)
+    missing = race & entries["QPosition"].eq(4)
+    entries.loc[penalised, "GridPosition"] = 6.0
+    entries.loc[pitlane, "GridPosition"] = 0.0
+    entries.loc[missing, "GridPosition"] = np.nan
+
+    feats = build_features(entries, laps, conditions, POWER_UNITS).set_index(["Season", "RoundNumber", "QPosition"])
+    assert feats.loc[(2026, 2, 1.0), "GridMinusQuali"] == 5
+    assert feats.loc[(2026, 2, 3.0), "GridMinusQuali"] == 6 - 3
+    assert feats.loc[(2026, 2, 4.0), "GridMinusQuali"] == 0
+    assert feats.loc[(2026, 2, 2.0), "GridMinusQuali"] == 0
 
 
 def test_long_run_degradation_ranks_drivers_by_relative_slope():

@@ -64,8 +64,19 @@ def headline(out: pd.DataFrame) -> str:
             f"Most likely podium: {podium}")
 
 
+def guard_already_run(race: pd.DataFrame, season: int, rnd: int, backfill: bool) -> bool:
+    """Refuse a race that already has a result, since scoring ignores those predictions."""
+    already_run = bool(race["FinishPosition"].notna().any())
+    if already_run and not backfill:
+        raise SystemExit(
+            f"{season} round {rnd} has already been run, so a prediction saved now would not count "
+            f"when scoring. Pass --backfill to save one anyway."
+        )
+    return already_run
+
+
 def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int] | None = None,
-        pitlane: list[str] | None = None) -> pd.DataFrame:
+        pitlane: list[str] | None = None, backfill: bool = False) -> pd.DataFrame:
     rnd = resolve_round(season, event)
     if refresh:
         fetch.run([season], rounds=[rnd])
@@ -81,6 +92,7 @@ def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int]
     race = feats[(feats["Season"] == season) & (feats["RoundNumber"] == rnd)]
     if race.empty or race["QPosition"].isna().all():
         raise SystemExit(f"No qualifying data for {season} round {rnd} yet.")
+    already_run = guard_already_run(race, season, rnd, backfill)
 
     train = ranker.training_rows(feats[feats["RaceIdx"] < race["RaceIdx"].iloc[0]])
     pred = ranker.predict_order(ranker.fit(train, target_era=config.era_index(season)), race)
@@ -99,7 +111,7 @@ def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int]
     out_dir.mkdir(parents=True, exist_ok=True)
     stem = out_dir / f"{season}_R{rnd:02d}"
     overrides = describe_overrides(penalties, pitlane)
-    pre_race = not race["FinishPosition"].notna().any()
+    pre_race = not already_run
     out.assign(
         DriverId=pred["DriverId"],
         EventName=event_name,

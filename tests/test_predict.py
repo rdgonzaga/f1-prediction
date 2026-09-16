@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from f1pred.predict import apply_grid_penalties, headline, markdown_table, parse_penalties
+from f1pred.predict import (
+    apply_grid_penalties, guard_already_run, headline, markdown_table, parse_penalties,
+)
 
 
 def quali(codes):
@@ -40,6 +42,24 @@ def test_bad_penalty_input_is_rejected():
         parse_penalties(["VER5"])
     with pytest.raises(SystemExit):
         apply_grid_penalties(quali(["A", "B"]), {"ZZZ": 3}, set())
+
+
+def test_refuses_a_race_that_already_ran():
+    race = pd.DataFrame({"FinishPosition": [1.0, 2.0, np.nan]})
+    with pytest.raises(SystemExit) as error:
+        guard_already_run(race, 2026, 15, backfill=False)
+    assert "round 15" in str(error.value)
+    assert "--backfill" in str(error.value)
+
+
+def test_backfill_overrides_the_refusal():
+    race = pd.DataFrame({"FinishPosition": [1.0, 2.0, np.nan]})
+    assert guard_already_run(race, 2026, 15, backfill=True) is True
+
+
+def test_upcoming_race_passes_the_guard():
+    race = pd.DataFrame({"FinishPosition": [np.nan, np.nan]})
+    assert guard_already_run(race, 2026, 15, backfill=False) is False
 
 
 def test_markdown_table_and_headline():

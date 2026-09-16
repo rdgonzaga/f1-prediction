@@ -31,6 +31,8 @@ def main() -> None:
     p_pred.add_argument("--no-refresh", action="store_true", help="Skip fetch/build")
     p_pred.add_argument("--penalty", nargs="+", metavar="DRIVER=PLACES", help="Grid place penalties, e.g. VER=5 NOR=3")
     p_pred.add_argument("--pitlane", nargs="+", metavar="DRIVER", help="Pit lane starters, e.g. STR")
+    p_pred.add_argument("--backfill", action="store_true",
+                        help="Allow predicting a race that already has a result (not counted by score)")
 
     p_report = sub.add_parser("report", help="Build a shareable HTML page from a saved prediction")
     p_report.add_argument("season", type=int)
@@ -77,7 +79,8 @@ def main() -> None:
     if args.command == "predict":
         from f1pred import predict
         predict.run(args.season, args.event, refresh=not args.no_refresh,
-                    penalties=predict.parse_penalties(args.penalty), pitlane=args.pitlane)
+                    penalties=predict.parse_penalties(args.penalty), pitlane=args.pitlane,
+                    backfill=args.backfill)
 
     if args.command == "fetch":
         from f1pred import fetch

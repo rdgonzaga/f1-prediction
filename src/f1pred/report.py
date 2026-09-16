@@ -57,6 +57,7 @@ STYLE = """
   :root:not([data-theme="light"]) .bar { background: var(--team-d); }
   :root:not([data-theme="light"]) rect.bar { fill: var(--team-d); background: none; }
   :root:not([data-theme="light"]) rect.bar-soft { fill: var(--team-d); }
+  :root:not([data-theme="light"]) text.on-bar { fill: var(--on-d); }
 }
 :root[data-theme="dark"] {
   --bg: #0b0d10;
@@ -73,6 +74,7 @@ STYLE = """
 :root[data-theme="dark"] .bar { background: var(--team-d); }
 :root[data-theme="dark"] rect.bar { fill: var(--team-d); background: none; }
 :root[data-theme="dark"] rect.bar-soft { fill: var(--team-d); }
+:root[data-theme="dark"] text.on-bar { fill: var(--on-d); }
 
 * { box-sizing: border-box; }
 body {
@@ -130,6 +132,7 @@ h2 {
 svg { width: 100%; height: auto; display: block; }
 rect.bar { fill: var(--team-l); }
 rect.bar-soft { fill: var(--team-l); fill-opacity: .28; }
+text.on-bar { fill: var(--on-l); }
 
 .scroller { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 15px; }
@@ -206,9 +209,15 @@ def team_colors(team: str) -> tuple[str, str]:
     return _hex(light), _hex(dark)
 
 
+def _on_color(value: str) -> str:
+    """Ink that stays readable on top of a team colour."""
+    return "#10131a" if _luma(_rgb(value)) > 0.55 else "#ffffff"
+
+
 def _team_style(team) -> str:
     light, dark = team_colors("" if pd.isna(team) else str(team))
-    return f"--team-l:{light};--team-d:{dark}"
+    return (f"--team-l:{light};--team-d:{dark};"
+            f"--on-l:{_on_color(light)};--on-d:{_on_color(dark)}")
 
 
 def _cell(value) -> str:
@@ -266,10 +275,10 @@ def _chart(rows: pd.DataFrame) -> str:
                      f'width="{win:.1f}" height="15" />')
         parts.append(f'<text x="{pad_l + podium + 7:.1f}" y="{y + 15}" fill="var(--ink-3)" font-size="12" '
                      f'font-family="IBM Plex Mono, monospace">{float(row.PodiumPct):.0f}</text>')
-        if podium - win > 28:
-            parts.append(f'<text x="{pad_l + win + 7:.1f}" y="{y + 15}" fill="var(--ink-2)" font-size="12" '
-                         f'font-weight="600" font-family="IBM Plex Mono, monospace">'
-                         f'{float(row.WinPct):.0f}</text>')
+        if win >= 30:
+            parts.append(f'<text class="on-bar" style="{style}" x="{pad_l + win - 7:.1f}" y="{y + 15}" '
+                         f'font-size="12" font-weight="600" text-anchor="end" '
+                         f'font-family="IBM Plex Mono, monospace">{float(row.WinPct):.0f}</text>')
     parts.append("</svg>")
     return "".join(parts)
 

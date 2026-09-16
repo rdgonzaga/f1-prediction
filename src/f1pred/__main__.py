@@ -32,6 +32,10 @@ def main() -> None:
     p_pred.add_argument("--penalty", nargs="+", metavar="DRIVER=PLACES", help="Grid place penalties, e.g. VER=5 NOR=3")
     p_pred.add_argument("--pitlane", nargs="+", metavar="DRIVER", help="Pit lane starters, e.g. STR")
 
+    p_report = sub.add_parser("report", help="Build a shareable HTML page from a saved prediction")
+    p_report.add_argument("season", type=int)
+    p_report.add_argument("round", type=int)
+
     p_score = sub.add_parser("score", help="Score saved predictions against race results")
     p_score.add_argument("--season", type=int)
     p_score.add_argument("--refresh", action="store_true", help="Fetch results for predicted races first")
@@ -46,6 +50,10 @@ def main() -> None:
     if args.command == "build":
         from f1pred import build
         build.run()
+
+    if args.command == "report":
+        from f1pred import report
+        report.run(args.season, args.round)
 
     if args.command == "backtest":
         from f1pred import build, evaluate

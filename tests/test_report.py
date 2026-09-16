@@ -49,7 +49,7 @@ def test_every_driver_appears_in_predicted_order(tmp_path):
 
 def test_headline_names_the_highest_win_chance(tmp_path):
     page = render(make_csv(tmp_path))
-    headline = page.split('class="headline"')[1].split("</section>")[0]
+    headline = page.split('class="headline"')[1].split("<hr")[0]
     assert "NOR" in headline
     assert "40.8% to win" in headline
 

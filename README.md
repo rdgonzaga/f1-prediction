@@ -1,6 +1,6 @@
 # f1-prediction
 
-Predicts an F1 race once qualifying is done — the finishing order, plus each driver's chance of
+Predicts an F1 race once qualifying is done: the finishing order, plus each driver's chance of
 winning, reaching the podium, scoring points, or retiring. Saves it as a web page you can open on
 your phone or send to someone.
 
@@ -11,24 +11,25 @@ your phone or send to someone.
 ## What it's actually good at
 
 Straight answer: it doesn't predict the finishing order any better than assuming everyone finishes
-where they started. That was tested properly — 48 races across 2024 and 2025, model against grid,
-race by race. Everything landed inside the margin of error, and a couple of variants came out worse.
+where they started. That was tested properly, across 48 races in the 2024 and 2025 seasons, model
+against grid, race by race. Everything landed inside the margin of error, and a couple of variants
+came out worse.
 
 The percentages are the real output, and a starting grid can't give you those. The grid tells you
 Norris starts first. It can't tell you he's 31% to win, or that Stroll has a 33% chance of not
-finishing. Those hold up against races that already happened: across 2025 the eventual winner scored
-1.19 on log loss, against 2.99 for treating every driver as equally likely.
+finishing. Those numbers hold up against races that already happened: across 2025 the eventual
+winner scored 1.19 on log loss, against 2.99 for treating every driver as equally likely.
 
 The retirement estimate is the weak one. Over 2025 it scores exactly the same as just using the
-field's average failure rate — no better. It only pulls ahead in 2026 (0.141 against 0.149), when
+field's average failure rate, so no better. It only pulls ahead in 2026 (0.141 against 0.149), when
 reliability shifted and a per-driver estimate started to matter.
 
 So read the order as "the grid, give or take", and pay attention to the numbers next to it.
 
 ## A race weekend
 
-Run it after qualifying and before the race — qualifying is what it works from. Timing data takes a
-few minutes to land, so give it about 90 minutes after the session starts.
+Run it after qualifying and before the race, since qualifying is what it works from. Timing data
+takes a few minutes to land, so give it about 90 minutes after the session starts.
 
 ```
 python -m f1pred fetch --seasons 2026 --rounds 15
@@ -39,7 +40,7 @@ python -m f1pred report 2026 15
 
 That writes `data/processed/predictions/2026_R15.html`. Open it in any browser.
 
-Use the round number rather than the race name — a number is used as-is, while a name gets
+Use the round number rather than the race name. A number is used as-is, while a name gets
 fuzzy-matched and can quietly land on the wrong event.
 
 Once the race is over, `python -m f1pred score --refresh` tells you how it did.
@@ -50,10 +51,10 @@ Once the race is over, `python -m f1pred score --refresh` tells you how it did.
 python -m f1pred predict 2026 15 --no-refresh --penalty VER=5 --pitlane STR
 ```
 
-That's not laziness. Penalties never appear in the timing data — I checked the two biggest grid drops
+That's not laziness. Penalties never appear in the timing data. I checked the two biggest grid drops
 in the dataset, Antonelli falling 12 places at Monza and Hadjar 11 at Spa, and neither is mentioned
 anywhere in the qualifying messages. They live in FIA stewards' documents, which FastF1 doesn't
-carry. So glance at the F1 site after qualifying; otherwise the model assumes everyone starts where
+carry. So glance at the F1 site after qualifying, otherwise the model assumes everyone starts where
 they qualified.
 
 **Don't run it once the race has started.** `predict` notices the result already exists and quietly
@@ -70,8 +71,8 @@ only honest way to tell whether a change helped.
 
 ## How it works
 
-Practice, qualifying, sprint and race sessions from 2022 on. Telemetry is never loaded — it was 97%
-of the storage and lap times already carry the pace.
+Practice, qualifying, sprint and race sessions from 2022 on. Telemetry is never loaded, since it was
+97% of the storage and lap times already carry the pace.
 
 The model only looks at the grid and qualifying: grid slot, pit-lane start, qualifying position, gap
 to pole, gap to teammate. Practice pace, recent form, career record and track history are all built
@@ -83,14 +84,14 @@ than guess each position on its own. The percentages come from simulating each r
 from those scores, with the spread tuned on how the top three actually finished recently. A separate
 model estimates each driver's chance of retiring and drops them to the back.
 
-Every measurement is walk-forward — predicting a race only ever uses races that happened before it.
-Tests in `tests/test_features.py` guard against leaking future information.
+Every measurement is walk-forward, so predicting a race only ever uses races that happened before
+it. Tests in `tests/test_features.py` guard against leaking future information.
 
 ## Upkeep
 
-Each new season, add a row per team to `reference/power_units.csv`; `build` warns if one is missing.
+Each new season, add a row per team to `reference/power_units.csv`. `build` warns if one is missing.
 When the regulations change (next expected 2031), add that year to `ERA_STARTS` in
-`src/f1pred/config.py` — races from the same era get 3× training weight, since the pecking order
+`src/f1pred/config.py`, since races from the same era get 3x training weight when the pecking order
 resets.
 
 One known weakness: the retirement model runs low for 2026, predicting around 14% when the real rate
@@ -112,5 +113,5 @@ pytest
 src/f1pred/   fetch, build, features, model, evaluate, probabilities, dnf, predict, report, score
 tests/        leakage, metric, penalty, scoring and page tests
 notebooks/    exploration and review only
-reference/    power_units.csv — engine supplier per team per season
+reference/    power_units.csv, engine supplier per team per season
 ```

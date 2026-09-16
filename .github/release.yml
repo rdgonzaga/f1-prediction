@@ -1,0 +1,20 @@
+changelog:
+  exclude:
+    labels: [invalid, duplicate, wontfix]
+  categories:
+    - title: Bug Fixes
+      labels: [bug]
+    - title: Model
+      labels: [model]
+    - title: Data Pipeline
+      labels: [data, pipeline]
+    - title: Prediction Page
+      labels: [report]
+    - title: Performance
+      labels: [perf]
+    - title: Documentation
+      labels: [docs, documentation]
+    - title: Maintenance
+      labels: [ci, infra, dependencies]
+    - title: Other Changes
+      labels: ["*"]

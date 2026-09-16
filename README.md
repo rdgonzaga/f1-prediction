@@ -1,50 +1,116 @@
 # f1-prediction
 
-Predicts the full F1 race finishing order after qualifying.
+Predicts an F1 race once qualifying is done — the finishing order, plus each driver's chance of
+winning, reaching the podium, scoring points, or retiring. Saves it as a web page you can open on
+your phone or send to someone.
+
+![Predicted order and win chances for the 2026 Spanish Grand Prix](docs/report-chart.png)
+
+![Win, podium, points and DNF chances for all 22 drivers](docs/report-table.png)
+
+## What it's actually good at
+
+Straight answer: it doesn't predict the finishing order any better than assuming everyone finishes
+where they started. That was tested properly — 48 races across 2024 and 2025, model against grid,
+race by race. Everything landed inside the margin of error, and a couple of variants came out worse.
+
+The percentages are the real output, and a starting grid can't give you those. The grid tells you
+Norris starts first. It can't tell you he's 31% to win, or that Stroll has a 33% chance of not
+finishing. Those hold up against races that already happened: across 2025 the eventual winner scored
+1.19 on log loss, against 2.99 for treating every driver as equally likely.
+
+The retirement estimate is the weak one. Over 2025 it scores exactly the same as just using the
+field's average failure rate — no better. It only pulls ahead in 2026 (0.141 against 0.149), when
+reliability shifted and a per-driver estimate started to matter.
+
+So read the order as "the grid, give or take", and pay attention to the numbers next to it.
+
+## A race weekend
+
+Run it after qualifying and before the race — qualifying is what it works from. Timing data takes a
+few minutes to land, so give it about 90 minutes after the session starts.
+
+```
+python -m f1pred fetch --seasons 2026 --rounds 15
+python -m f1pred build
+python -m f1pred predict 2026 15 --no-refresh
+python -m f1pred report 2026 15
+```
+
+That writes `data/processed/predictions/2026_R15.html`. Open it in any browser.
+
+Use the round number rather than the race name — a number is used as-is, while a name gets
+fuzzy-matched and can quietly land on the wrong event.
+
+Once the race is over, `python -m f1pred score --refresh` tells you how it did.
+
+**Grid penalties you have to enter yourself:**
+
+```
+python -m f1pred predict 2026 15 --no-refresh --penalty VER=5 --pitlane STR
+```
+
+That's not laziness. Penalties never appear in the timing data — I checked the two biggest grid drops
+in the dataset, Antonelli falling 12 places at Monza and Hadjar 11 at Spa, and neither is mentioned
+anywhere in the qualifying messages. They live in FIA stewards' documents, which FastF1 doesn't
+carry. So glance at the F1 site after qualifying; otherwise the model assumes everyone starts where
+they qualified.
+
+**Don't run it once the race has started.** `predict` notices the result already exists and quietly
+marks the prediction as hindsight, so it stops counting when you score it. There's no warning.
+
+## The other commands
+
+`fetch` on its own downloads every season from 2022 to now. It's resumable, skips what it already
+has, and ignores sessions that haven't happened yet. FastF1 allows 500 calls an hour so a full
+download takes a few hours, but week to week it only grabs the new sessions.
+
+`build` combines the downloads and runs sanity checks. `backtest` replays past races, which is the
+only honest way to tell whether a change helped.
+
+## How it works
+
+Practice, qualifying, sprint and race sessions from 2022 on. Telemetry is never loaded — it was 97%
+of the storage and lap times already carry the pace.
+
+The model only looks at the grid and qualifying: grid slot, pit-lane start, qualifying position, gap
+to pole, gap to teammate. Practice pace, recent form, career record and track history are all built
+and available, just switched off, because they consistently made things worse. With about 100 races
+to learn from, the model memorises those features instead of learning from them.
+
+Underneath it's an `XGBRanker` in pairwise mode, so it learns to order drivers within a race rather
+than guess each position on its own. The percentages come from simulating each race 20,000 times
+from those scores, with the spread tuned on how the top three actually finished recently. A separate
+model estimates each driver's chance of retiring and drops them to the back.
+
+Every measurement is walk-forward — predicting a race only ever uses races that happened before it.
+Tests in `tests/test_features.py` guard against leaking future information.
+
+## Upkeep
+
+Each new season, add a row per team to `reference/power_units.csv`; `build` warns if one is missing.
+When the regulations change (next expected 2031), add that year to `ERA_STARTS` in
+`src/f1pred/config.py` — races from the same era get 3× training weight, since the pecking order
+resets.
+
+One known weakness: the retirement model runs low for 2026, predicting around 14% when the real rate
+has been 18%. The new cars are less reliable than the seasons it learned from.
 
 ## Setup
+
 ```
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 pip install -e .
-```
-
-## Usage
-```
-python -m f1pred fetch                      # 2022 → current year, newest first, resumable
-python -m f1pred fetch --seasons 2026 2025  # fetch in this order
-python -m f1pred build                      # combine into data/processed, run data checks
-python -m f1pred backtest                   # walk-forward on latest season vs grid order
-python -m f1pred backtest --features grid quali pace all --probabilities
-python -m f1pred predict 2026 Singapore     # after qualifying: fetch weekend, rebuild, predict
-python -m f1pred predict 2026 Singapore --penalty VER=5 --pitlane STR
-python -m f1pred score --refresh            # after the race: compare saved predictions with results
 pytest
 ```
-`score` only counts predictions saved before the race result existed. `--include-backfilled` adds the others.
-`predict` prints the favourite and likely podium, plus win, podium, points and DNF chances for every driver. It saves `data/processed/predictions/<season>_R<round>.csv` and a `.md` summary.
-FastF1 limits API calls to 500 per hour, so a full fetch takes a few hours. Re-running skips sessions that are already done and re-fetches any saved without race control messages. Each race weekend, `fetch` only downloads the new sessions.
-
-## Future seasons
-Seasons run from 2022 to the current year automatically. When a new regulation era begins (next expected 2031), add its first year to `ERA_STARTS` in `src/f1pred/config.py`. Races from the same era as the predicted race get 3× training weight.
-
-Before each new season, add one row per team to `reference/power_units.csv` (engine supplier). `build` warns about any team missing from it.
-
-## Storage
-Telemetry is never loaded. Car and position data were ~97% of the old cache (992 MB for 6 sessions). Each session is saved as compact parquet, and the event's FastF1 cache is deleted afterwards. The full dataset is expected to stay under ~300 MB.
-
-## Approach
-- **Data:** 2022–2026 practice, qualifying, sprint and race sessions.
-- **2026 regulations:** team pecking orders reset, so features are relative and carry across eras. The default set is grid plus qualifying (grid slot, pit-lane start, quali position, gap to pole, gap to teammate): on the full 2022-2026 backtest it was the only set to beat the grid baseline. Long-run practice pace, driver/team form, career traits and track difficulty stay available as the `pace` and `all` comparison sets. Same-era races get 3× weight.
-- **Model:** `XGBRanker` (pairwise), grouped by race.
-- **Probabilities:** each race is simulated 20,000 times from the ranker scores (Plackett-Luce). The spread is fitted on how the top 3 finished, and a logistic DNF model sends retirements to the back.
-- **Validation:** walk-forward over 2026 rounds, reported next to the grid-order baseline (Spearman, winner hit, podium hit rate, position MAE).
-- **Leakage:** features only use earlier races plus the same weekend's pre-race sessions (see `tests/test_features.py`).
 
 ## Layout
+
 ```
-src/f1pred/   config, fetch, build, features, model, evaluate, predict, CLI
-tests/        leakage, build and metric tests
-notebooks/    exploration and result review only
+src/f1pred/   fetch, build, features, model, evaluate, probabilities, dnf, predict, report, score
+tests/        leakage, metric, penalty, scoring and page tests
+notebooks/    exploration and review only
+reference/    power_units.csv — engine supplier per team per season
 ```

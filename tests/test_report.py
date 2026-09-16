@@ -60,6 +60,16 @@ def test_pit_lane_start_and_overrides_are_shown(tmp_path):
     assert "VER +5" in page
 
 
+def test_saved_file_is_a_complete_page(tmp_path):
+    from f1pred.report import standalone
+    page = standalone(render(make_csv(tmp_path)))
+    assert page.startswith("<!doctype html>")
+    assert 'name="viewport"' in page
+    assert page.count('<div class="wrap">') == 1
+    assert page.index("<style>") < page.index("</head>") < page.index("<body>")
+    assert page.rstrip().endswith("</html>")
+
+
 def test_missing_prediction_is_reported(tmp_path, monkeypatch):
     from f1pred import report
     monkeypatch.setattr(report, "PREDICTIONS_DIR", tmp_path)

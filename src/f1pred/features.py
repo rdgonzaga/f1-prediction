@@ -11,8 +11,12 @@ OUTCOME_COLS = ["FinishPosition", "Classified", "Status", "Points", "RaceLaps"]
 CONDITION_OUTCOME_COLS = ["SCCount", "VSCCount"]
 DNF_CODES = {"R", "D", "E", "N", "F"}
 
-FEATURES = [
-    "Grid", "GridPitlane", "QPosition", "QGapPct", "QGapTeammatePct",
+_GRID = ["Grid", "GridPitlane"]
+
+# Grid + qualifying was the only set to beat the grid baseline on the full 2022-2026 backtest.
+FEATURES = _GRID + ["QPosition", "QGapPct", "QGapTeammatePct"]
+
+ALL_FEATURES = FEATURES + [
     "SprintPosition", "SprintGain",
     "LongRunPct", "LongRunRank", "LongRunTeammatePct", "LongRunLaps",
     "DrvFinishLast3", "DrvFinishLast5", "DrvPointsLast5", "DrvGainLast5", "DrvDnfSeason",
@@ -28,25 +32,20 @@ RACE_CONSTANT_FEATURES = [
 ]
 
 # Candidate features kept out of FEATURES until a full-data backtest shows they help.
-DEG_FEATURES = ["LongRunDeg", "LongRunDegRank"]
 PU_FEATURES = ["PuQPosLast3", "PuFinishLast3"]
 PENALTY_FEATURES = ["GridMinusQuali"]
 
-_GRID = ["Grid", "GridPitlane"]
-_QUALI = _GRID + ["QPosition", "QGapPct", "QGapTeammatePct"]
-_PACE = _QUALI + ["LongRunPct", "LongRunRank", "LongRunTeammatePct", "LongRunLaps", "SprintPosition", "SprintGain"]
+_PACE = FEATURES + ["LongRunPct", "LongRunRank", "LongRunTeammatePct", "LongRunLaps", "SprintPosition", "SprintGain"]
 FEATURE_SETS = {
     "grid": _GRID,
-    "quali": _QUALI,
+    "quali": FEATURES,
     "pace": _PACE,
-    "pace_deg": _PACE + DEG_FEATURES,
     "pace_pu": _PACE + PU_FEATURES,
-    "no_race_constants": [f for f in FEATURES if f not in RACE_CONSTANT_FEATURES],
-    "all": FEATURES,
-    "all_deg": FEATURES + DEG_FEATURES,
-    "all_pu": FEATURES + PU_FEATURES,
-    "quali_pen": _QUALI + PENALTY_FEATURES,
-    "all_pen": FEATURES + PENALTY_FEATURES,
+    "no_race_constants": [f for f in ALL_FEATURES if f not in RACE_CONSTANT_FEATURES],
+    "all": ALL_FEATURES,
+    "all_pu": ALL_FEATURES + PU_FEATURES,
+    "quali_pen": FEATURES + PENALTY_FEATURES,
+    "all_pen": ALL_FEATURES + PENALTY_FEATURES,
 }
 
 
@@ -64,32 +63,19 @@ def long_run_pace(laps: pd.DataFrame) -> pd.DataFrame:
     stint_median = clean.groupby(stint_keys)["LapTimeSeconds"].transform("median")
     clean = clean[clean["LapTimeSeconds"] <= stint_median * 1.04]
 
-    life = clean["TyreLife"].fillna(clean["LapNumber"])
-    grp = clean.assign(Life=life).groupby(stint_keys)
-    dx = life - grp["Life"].transform("mean")
-    dy = clean["LapTimeSeconds"] - grp["LapTimeSeconds"].transform("mean")
-    clean = clean.assign(DxDy=dx * dy, Dx2=dx ** 2)
-
     stints = clean.groupby(stint_keys).agg(
-        Pace=("LapTimeSeconds", "median"), Laps=("LapTimeSeconds", "size"), DxDy=("DxDy", "sum"), Dx2=("Dx2", "sum"),
+        Pace=("LapTimeSeconds", "median"), Laps=("LapTimeSeconds", "size"),
     ).reset_index()
     stints = stints[stints["Laps"] >= 5]
     ref_keys = RACE_KEYS + ["SessionCode", "Compound"]
     stints = stints[stints.groupby(ref_keys)["Pace"].transform("size") >= 3].copy()
     stints["Pct"] = (stints["Pace"] / stints.groupby(ref_keys)["Pace"].transform("median") - 1) * 100
     stints["Weighted"] = stints["Pct"] * stints["Laps"]
-    # Seconds lost per lap of tyre age, relative to the session/compound median (cancels fuel burn).
-    deg = stints["DxDy"] / stints["Dx2"].where(stints["Dx2"] > 0)
-    stints["DegRel"] = deg - deg.groupby([stints[k] for k in ref_keys]).transform("median")
-    stints["DegLaps"] = stints["Laps"].where(stints["DegRel"].notna(), 0)
-    stints["WeightedDeg"] = (stints["DegRel"] * stints["Laps"]).fillna(0)
 
     pace = stints.groupby(RACE_KEYS + ["Driver"]).agg(
-        Weighted=("Weighted", "sum"), LongRunLaps=("Laps", "sum"), WeightedDeg=("WeightedDeg", "sum"),
-        DegLaps=("DegLaps", "sum"),
+        Weighted=("Weighted", "sum"), LongRunLaps=("Laps", "sum"),
     )
     pace["LongRunPct"] = pace.pop("Weighted") / pace["LongRunLaps"]
-    pace["LongRunDeg"] = pace.pop("WeightedDeg") / pace.pop("DegLaps").where(lambda s: s > 0)
     return pace.reset_index().rename(columns={"Driver": "Abbreviation"})
 
 
@@ -141,7 +127,6 @@ def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.Dat
     pace = long_run_pace(laps)
     df = df.merge(pace, on=RACE_KEYS + ["Abbreviation"], how="left")
     df["LongRunRank"] = df.groupby(RACE_KEYS)["LongRunPct"].rank()
-    df["LongRunDegRank"] = df.groupby(RACE_KEYS)["LongRunDeg"].rank()
     df["LongRunTeammatePct"] = df["LongRunPct"] - (
         df.groupby(RACE_KEYS + ["TeamId"])["LongRunPct"].transform("sum") - df["LongRunPct"]
     ) / (df.groupby(RACE_KEYS + ["TeamId"])["LongRunPct"].transform("count") - 1)
@@ -195,6 +180,6 @@ def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.Dat
     df["RacesIntoEra"] = (df["RaceIdx"] - era_first_idx).astype(float)
 
     df = df.sort_values(["RaceIdx", "QPosition"]).reset_index(drop=True)
-    for col in FEATURES + DEG_FEATURES + PU_FEATURES + PENALTY_FEATURES:
+    for col in ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES:
         df[col] = pd.to_numeric(df[col], errors="coerce").astype(float)
     return df

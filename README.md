@@ -36,7 +36,7 @@ Telemetry is never loaded. Car and position data were ~97% of the old cache (992
 
 ## Approach
 - **Data:** 2022–2026 practice, qualifying, sprint and race sessions.
-- **2026 regulations:** team pecking orders reset, so features are relative and carry across eras: grid, quali gap to pole and teammate, long-run practice pace, within-season driver/team form, career driver traits, and track overtaking difficulty. Same-era races get 3× weight.
+- **2026 regulations:** team pecking orders reset, so features are relative and carry across eras. The default set is grid plus qualifying (grid slot, pit-lane start, quali position, gap to pole, gap to teammate): on the full 2022-2026 backtest it was the only set to beat the grid baseline. Long-run practice pace, driver/team form, career traits and track difficulty stay available as the `pace` and `all` comparison sets. Same-era races get 3× weight.
 - **Model:** `XGBRanker` (pairwise), grouped by race.
 - **Probabilities:** each race is simulated 20,000 times from the ranker scores (Plackett-Luce). The spread is fitted on how the top 3 finished, and a logistic DNF model sends retirements to the back.
 - **Validation:** walk-forward over 2026 rounds, reported next to the grid-order baseline (Spearman, winner hit, podium hit rate, position MAE).

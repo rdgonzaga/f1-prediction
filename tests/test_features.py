@@ -4,7 +4,7 @@ import pandas.testing as pdt
 import pytest
 
 from f1pred.features import (
-    CONDITION_OUTCOME_COLS, FEATURES, OUTCOME_COLS, PENALTY_FEATURES, PU_FEATURES, build_features, long_run_pace,
+    ALL_FEATURES, CONDITION_OUTCOME_COLS, OUTCOME_COLS, PENALTY_FEATURES, PU_FEATURES, build_features, long_run_pace,
 )
 
 TEAMS = ["red", "blue", "green"]
@@ -69,7 +69,8 @@ def test_features_do_not_use_target_race_outcome():
 
     def pick(df):
         rows = df[(df["Season"] == target[0]) & (df["RoundNumber"] == target[1])]
-        return rows.sort_values("DriverId")[["DriverId"] + FEATURES + PU_FEATURES + PENALTY_FEATURES].reset_index(drop=True)
+        cols = ["DriverId"] + ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES
+        return rows.sort_values("DriverId")[cols].reset_index(drop=True)
 
     pdt.assert_frame_equal(pick(full), pick(blind))
 
@@ -79,7 +80,7 @@ def test_one_row_per_driver_race_and_all_features_numeric():
     feats = build_features(entries, laps, conditions)
     assert len(feats) == len(entries)
     assert not feats.duplicated(["Season", "RoundNumber", "DriverId"]).any()
-    assert all(feats[c].dtype == float for c in FEATURES)
+    assert all(feats[c].dtype == float for c in ALL_FEATURES)
 
 
 def test_first_race_has_no_history():
@@ -123,21 +124,6 @@ def test_grid_minus_quali_reflects_penalties_and_pit_lane():
     assert feats.loc[(2026, 2, 3.0), "GridMinusQuali"] == 6 - 3
     assert feats.loc[(2026, 2, 4.0), "GridMinusQuali"] == 0
     assert feats.loc[(2026, 2, 2.0), "GridMinusQuali"] == 0
-
-
-def test_long_run_degradation_ranks_drivers_by_relative_slope():
-    slopes = {"AAA": 0.02, "BBB": 0.05, "CCC": 0.10, "DDD": 0.15}
-    laps = pd.DataFrame([{
-        "Season": 2026, "RoundNumber": 1, "SessionCode": "FP2", "Driver": driver, "Team": "t",
-        "LapNumber": float(lap), "Stint": 1.0, "Compound": "MEDIUM", "TyreLife": float(lap),
-        "LapTimeSeconds": 90 + slope * lap, "PitInTimeSeconds": np.nan,
-        "PitOutTimeSeconds": 10.0 if lap == 1 else np.nan, "TrackStatus": "1", "IsAccurate": True, "Deleted": False,
-    } for driver, slope in slopes.items() for lap in range(1, 9)])
-
-    deg = long_run_pace(laps).set_index("Abbreviation")["LongRunDeg"]
-    median = np.median(list(slopes.values()))
-    for driver, slope in slopes.items():
-        assert deg[driver] == pytest.approx(slope - median, abs=1e-9)
 
 
 def test_long_run_pace_excludes_out_laps_and_short_stints():

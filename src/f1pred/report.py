@@ -155,7 +155,7 @@ td.drv {
 td.team { text-align: left; color: var(--ink-3); font-size: 14px; }
 td.win { font-weight: 600; }
 .move { color: var(--ink-3); font-size: 13px; margin-left: 4px; }
-.move.up { color: var(--signal); }
+.move.up { color: var(--ink-2); font-weight: 600; }
 .risk { color: var(--signal); font-weight: 600; }
 
 .note { margin-top: 14px; max-width: 62ch; }
@@ -379,11 +379,19 @@ def render(csv_path: Path) -> str:
 """
 
 
+def standalone(fragment: str) -> str:
+    """Wrap the page so the saved file opens correctly on its own, phone included."""
+    head, _, body = fragment.partition('<div class="wrap">')
+    return ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
+            '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+            f'{head}</head>\n<body>\n<div class="wrap">{body}</body>\n</html>\n')
+
+
 def run(season: int, rnd: int) -> Path:
     csv_path = PREDICTIONS_DIR / f"{season}_R{rnd:02d}.csv"
     if not csv_path.exists():
         raise SystemExit(f"No saved prediction at {csv_path}; run `predict` first.")
     out_path = csv_path.with_suffix(".html")
-    out_path.write_text(render(csv_path), encoding="utf-8")
-    print(f"Wrote {out_path}")
+    out_path.write_text(standalone(render(csv_path)), encoding="utf-8")
+    print(f"Wrote {out_path}\nOpen it in a browser, or send the path to Claude to publish a shareable link.")
     return out_path

@@ -102,9 +102,13 @@ def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int]
     pre_race = not race["FinishPosition"].notna().any()
     out.assign(
         DriverId=pred["DriverId"],
+        EventName=event_name,
         PreRace=pre_race,
         PredictedAtUTC=pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d %H:%M:%S"),
         GridOverrides=overrides,
+        Temperature=temperature,
+        CalibrationRaces=n_calibration,
+        Warnings="; ".join(warnings),
     ).to_csv(stem.with_suffix(".csv"), index=False)
     summary = [f"# {event_name} {season}", "", headline(out), ""]
     summary += [] if pre_race else ["_Made after the race result was known (not counted by `score`)._", ""]

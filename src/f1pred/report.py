@@ -192,8 +192,11 @@ def _chart(rows: pd.DataFrame) -> str:
                      f'fill="var(--accent-soft)" />')
         parts.append(f'<rect x="{pad_l}" y="{y + 3}" width="{win:.1f}" height="16" rx="3" '
                      f'fill="var(--accent)" />')
-        parts.append(f'<text x="{pad_l + max(podium, win) + 7:.1f}" y="{y + 15}" fill="var(--ink-2)" '
-                     f'font-size="11">{float(row.WinPct):.0f}%</text>')
+        parts.append(f'<text x="{pad_l + podium + 7:.1f}" y="{y + 15}" fill="var(--muted)" '
+                     f'font-size="11">{float(row.PodiumPct):.0f}%</text>')
+        if podium - win > 30:
+            parts.append(f'<text x="{pad_l + win + 7:.1f}" y="{y + 15}" fill="var(--accent)" '
+                         f'font-size="11" font-weight="600">{float(row.WinPct):.0f}%</text>')
     parts.append("</svg>")
     return "".join(parts)
 

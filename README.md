@@ -21,7 +21,7 @@ finishing. Those numbers hold up against races that already happened: across 202
 winner scored 1.19 on log loss, against 2.99 for treating every driver as equally likely.
 
 The retirement estimate is the weak one. Over 2025 it scores exactly the same as just using the
-field's average failure rate, so no better. It only pulls ahead in 2026 (0.141 against 0.149), when
+field's average failure rate, so no better. It only pulls ahead in 2026 (0.139 against 0.149), when
 reliability shifted and a per-driver estimate started to matter.
 
 So read the order as "the grid, give or take", and pay attention to the numbers next to it.
@@ -107,8 +107,8 @@ When the regulations change (next expected 2031), add that year to `ERA_STARTS` 
 `src/f1pred/config.py`, since races from the same era get 3x training weight when the pecking order
 resets.
 
-One known weakness: the retirement model runs low for 2026, predicting around 14% when the real rate
-has been 18%. The new cars are less reliable than the seasons it learned from.
+The retirement model gives races from the current era 10x weight, because reliability resets with new
+cars. Without that it predicted about 14% retirements in 2026 against a real 18%; with it, 17%.
 
 ## Setup
 

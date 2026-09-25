@@ -83,3 +83,13 @@ def test_upcoming_race_without_team_id_takes_it_from_team_name():
     entries = build_entries(pd.DataFrame(past + [upcoming]))
 
     assert (entries["TeamId"] == "team").all()
+
+
+def test_upcoming_race_without_driver_id_takes_it_from_abbreviation():
+    past = [result_row("Q", "a", "alpha", 1.0), result_row("R", "a", "alpha", 1.0, grid=1.0),
+            result_row("Q", "b", "bravo", 2.0), result_row("R", "b", "bravo", 2.0, grid=2.0)]
+    upcoming = [{**result_row("Q", n, "x", p), "RoundNumber": 2, "DriverId": None} for n, p in [("a", 2.0), ("b", 1.0)]]
+    entries = build_entries(pd.DataFrame(past + upcoming))
+
+    assert not entries.duplicated(["Season", "RoundNumber", "DriverId"]).any()
+    assert entries.set_index(["RoundNumber", "Abbreviation"]).loc[(2, "A"), "DriverId"] == "alpha"

@@ -32,13 +32,21 @@ Run it after qualifying and before the race, since qualifying is what it works f
 takes a few minutes to land, so give it about 90 minutes after the session starts.
 
 ```
-python -m f1pred fetch --seasons 2026 --rounds 15
-python -m f1pred build
-python -m f1pred predict 2026 15 --no-refresh
-python -m f1pred report 2026 15
+python -m f1pred weekend 2026 16
 ```
 
-That writes `data/processed/predictions/2026_R15.html`. Open it in any browser.
+That fetches the new sessions, rebuilds, predicts and writes `data/processed/predictions/2026_R16.html`.
+Open it in any browser. If qualifying isn't out yet it stops and says so; add `--wait 60` to keep
+retrying every 5 minutes for up to an hour.
+
+The same thing as separate steps, e.g. to re-run just the prediction after adding a penalty:
+
+```
+python -m f1pred fetch --seasons 2026 --rounds 16
+python -m f1pred build
+python -m f1pred predict 2026 16 --no-refresh
+python -m f1pred report 2026 16
+```
 
 Use the round number rather than the race name. A number is used as-is, while a name gets
 fuzzy-matched and can quietly land on the wrong event.
@@ -48,7 +56,7 @@ Once the race is over, `python -m f1pred score --refresh` tells you how it did.
 **Grid penalties you have to enter yourself:**
 
 ```
-python -m f1pred predict 2026 15 --no-refresh --penalty VER=5 --pitlane STR
+python -m f1pred weekend 2026 16 --penalty VER=5 --pitlane STR
 ```
 
 That's not laziness. Penalties never appear in the timing data. I checked the two biggest grid drops
@@ -57,8 +65,8 @@ anywhere in the qualifying messages. They live in FIA stewards' documents, which
 carry. So glance at the F1 site after qualifying, otherwise the model assumes everyone starts where
 they qualified.
 
-**Don't run it once the race has started.** `predict` notices the result already exists and quietly
-marks the prediction as hindsight, so it stops counting when you score it. There's no warning.
+**Run it before the race starts.** Once the result exists, `predict` refuses, since a prediction made
+in hindsight doesn't count when you score it. `--backfill` saves one anyway.
 
 ## The other commands
 

@@ -34,6 +34,14 @@ def main() -> None:
     p_pred.add_argument("--backfill", action="store_true",
                         help="Allow predicting a race that already has a result (not counted by score)")
 
+    p_week = sub.add_parser("weekend", help="Fetch, build, predict and report a race in one go")
+    p_week.add_argument("season", type=int)
+    p_week.add_argument("event", help="Round number or event name, e.g. 16")
+    p_week.add_argument("--penalty", nargs="+", metavar="DRIVER=PLACES", help="Grid place penalties, e.g. VER=5 NOR=3")
+    p_week.add_argument("--pitlane", nargs="+", metavar="DRIVER", help="Pit lane starters, e.g. STR")
+    p_week.add_argument("--wait", type=int, default=0, metavar="MINUTES",
+                        help="Keep retrying every 5 min for up to this long if qualifying isn't out yet")
+
     p_report = sub.add_parser("report", help="Build a shareable HTML page from a saved prediction")
     p_report.add_argument("season", type=int)
     p_report.add_argument("round", type=int)
@@ -87,6 +95,11 @@ def main() -> None:
         predict.run(args.season, args.event, refresh=not args.no_refresh,
                     penalties=predict.parse_penalties(args.penalty), pitlane=args.pitlane,
                     backfill=args.backfill)
+
+    if args.command == "weekend":
+        from f1pred import predict, weekend
+        weekend.run(args.season, args.event, penalties=predict.parse_penalties(args.penalty), pitlane=args.pitlane,
+                    wait_minutes=args.wait)
 
     if args.command == "fetch":
         from f1pred import fetch

@@ -86,7 +86,9 @@ The model mostly looks at the grid and qualifying: grid slot, pit-lane start, qu
 gap to pole, gap to teammate. On top of that it gets one pace estimate: where the driver ranks on
 practice lap time, recent finishes and the team's recent qualifying, and how far behind that they're
 starting. That's for the fast car stuck at the back, like Antonelli going from 19th on the grid to a
-win at Monza. It improved the 2024 and 2025 backtests but not the (shorter) 2026 one.
+win at Monza. It also knows the track: how well grid order has held there before and how often it
+brings out a safety car, so starting 16th in Baku counts for less than starting 16th in Monaco. Both
+improved the 2024 and 2025 backtests but not the (shorter) 2026 one.
 
 Raw practice pace, recent form, career record and track history are all built and available, just
 switched off, because on their own they made things worse. With about 100 races to learn from, the

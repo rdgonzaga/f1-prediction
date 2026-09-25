@@ -120,6 +120,9 @@ pip install -e .
 pytest
 ```
 
+The notebooks need Jupyter on top: `pip install -r requirements-dev.txt`, then pick the `.venv`
+kernel.
+
 ## Layout
 
 ```

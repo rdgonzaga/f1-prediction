@@ -1,0 +1,5 @@
+# Notebooks only; the CLI and tests need just requirements.txt
+-r requirements.txt
+ipykernel==7.3.0
+nbconvert==7.17.1
+notebook==7.6.3

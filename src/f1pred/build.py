@@ -58,6 +58,11 @@ def build_entries(results: pd.DataFrame) -> pd.DataFrame:
     entries = quali.merge(race, on=keys, how="outer", suffixes=("", "_r"))
     for col in event_cols[2:] + driver_cols[1:]:
         entries[col] = entries[col].fillna(entries.pop(f"{col}_r"))
+    # Quali results for an upcoming race can lack TeamId; the team name still identifies it.
+    known = entries.dropna(subset=["TeamId", "TeamName"]).drop_duplicates(["Season", "TeamName"], keep="last")
+    team_ids = known.set_index(["Season", "TeamName"])["TeamId"]
+    fill = pd.Series(list(zip(entries["Season"], entries["TeamName"])), index=entries.index).map(team_ids)
+    entries["TeamId"] = entries["TeamId"].fillna(fill)
     entries = entries.merge(sprint, on=keys, how="left")
     entries["Location"] = entries["Location"].map(normalize_location)
     return entries.sort_values(RACE_KEYS + ["QPosition"]).reset_index(drop=True)

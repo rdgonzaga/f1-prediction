@@ -43,3 +43,13 @@ def test_certain_dnf_goes_to_back_and_zero_dnf_matches_plain_simulation():
 
     none = finish_probabilities(scores, 1.0, dnf_prob=[0.0, 0.0, 0.0])
     pdt.assert_frame_equal(none.drop(columns="DnfPct"), finish_probabilities(scores, 1.0))
+
+
+def test_current_era_weight_pulls_base_rate_toward_the_new_era():
+    feats = dnf.add_reliability_features(build_features(*make_data()))
+    feats["Dnf"] = feats["Season"].eq(2026).astype(float)
+    train = feats[feats["RaceIdx"] < race_rows(feats, 2026, 3)["RaceIdx"].iloc[0]]
+
+    even = dnf.fit(train, target_era=1, era_weight=1.0)
+    leaning = dnf.fit(train, target_era=1, era_weight=10.0)
+    assert leaning.base_rate_ > even.base_rate_

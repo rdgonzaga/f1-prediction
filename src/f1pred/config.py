@@ -16,6 +16,8 @@ FIRST_SEASON = 2022
 # Add the first season of each new regulation era here (e.g. 2031).
 ERA_STARTS = [2022, 2026]
 CURRENT_ERA_SAMPLE_WEIGHT = 3.0
+# Reliability shifts with new regulations, so the DNF model leans much harder on the current era.
+DNF_CURRENT_ERA_WEIGHT = 10.0
 
 # Win/podium probability spread is fitted on the order of the first k finishers only.
 CALIBRATION_TOP_K = 3

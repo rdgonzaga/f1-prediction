@@ -7,6 +7,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
+from f1pred import config
 from f1pred.features import RACE_KEYS, _per_race_history
 
 DNF_FEATURES = ["DrvDnfSeason", "DrvDnfCareer", "TeamDnfSeason", "FieldDnfLast10", "Grid"]
@@ -34,13 +35,14 @@ def _design(rows: pd.DataFrame, fallback: float) -> pd.DataFrame:
     return X
 
 
-def fit(train: pd.DataFrame):
+def fit(train: pd.DataFrame, target_era: int | None = None, era_weight: float = config.DNF_CURRENT_ERA_WEIGHT):
     rows = train[train["FinishPosition"].notna() & train["Classified"].astype("string").ne("W")]
-    base_rate = float(rows["Dnf"].mean())
+    weights = np.where(rows["Season"].map(config.era_index) == target_era, era_weight, 1.0)
+    base_rate = float(np.average(rows["Dnf"], weights=weights)) if len(rows) else 0.0
     if rows["Dnf"].nunique() < 2:
         return base_rate
     model = make_pipeline(StandardScaler(), LogisticRegression(C=0.5))
-    model.fit(_design(rows, base_rate), rows["Dnf"].astype(int))
+    model.fit(_design(rows, base_rate), rows["Dnf"].astype(int), logisticregression__sample_weight=weights)
     model.base_rate_ = base_rate
     return model
 
@@ -52,5 +54,6 @@ def predict_proba(model, race: pd.DataFrame) -> np.ndarray:
 
 
 def race_dnf_probability(reliability: pd.DataFrame, race_idx: int, race: pd.DataFrame) -> np.ndarray:
-    model = fit(reliability[reliability["RaceIdx"] < race_idx])
+    season = int(reliability.loc[reliability["RaceIdx"] == race_idx, "Season"].iloc[0])
+    model = fit(reliability[reliability["RaceIdx"] < race_idx], target_era=config.era_index(season))
     return predict_proba(model, reliability.loc[race.index])

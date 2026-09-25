@@ -5,8 +5,7 @@ import pytest
 
 from f1pred.features import (
     ALL_FEATURES, CONDITION_OUTCOME_COLS, OOP_FEATURES, OUTCOME_COLS, PENALTY_FEATURES, PRACTICE_FEATURES, PU_FEATURES,
-    build_features,
-    long_run_pace, practice_pace,
+    TRACK_FEATURES, build_features, long_run_pace, practice_pace,
 )
 
 TEAMS = ["red", "blue", "green"]
@@ -71,7 +70,8 @@ def test_features_do_not_use_target_race_outcome():
 
     def pick(df):
         rows = df[(df["Season"] == target[0]) & (df["RoundNumber"] == target[1])]
-        cols = ["DriverId"] + ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES + PRACTICE_FEATURES + OOP_FEATURES
+        cols = (["DriverId"] + ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES + PRACTICE_FEATURES + OOP_FEATURES
+                + TRACK_FEATURES)
         return rows.sort_values("DriverId")[cols].reset_index(drop=True)
 
     pdt.assert_frame_equal(pick(full), pick(blind))
@@ -82,7 +82,7 @@ def test_one_row_per_driver_race_and_all_features_numeric():
     feats = build_features(entries, laps, conditions)
     assert len(feats) == len(entries)
     assert not feats.duplicated(["Season", "RoundNumber", "DriverId"]).any()
-    assert all(feats[c].dtype == float for c in ALL_FEATURES + PRACTICE_FEATURES + OOP_FEATURES)
+    assert all(feats[c].dtype == float for c in ALL_FEATURES + PRACTICE_FEATURES + OOP_FEATURES + TRACK_FEATURES)
 
 
 def test_first_race_has_no_history():

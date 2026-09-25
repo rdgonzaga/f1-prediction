@@ -37,9 +37,10 @@ PRACTICE_FEATURES = ["PracticeGapPct", "PracticeRank", "PracticeTeammatePct", "P
 PRACTICE_SESSIONS = ["FP1", "FP2", "FP3"]
 FORM_FEATURES = ["DrvFinishLast3", "DrvPointsLast5", "TeamBestFinishLast3", "TeamQPosLast3"]
 OOP_FEATURES = ["ExpectedRank", "OutOfPosition"]
+TRACK_FEATURES = ["GridXOvertaking", "OopXOvertaking", "GridXSafetyCar"]
 
-# Out-of-position pace improved 2024 and 2025 calibration over grid + quali; 2026 (11 races) was worse.
-FEATURES = QUALI_FEATURES + OOP_FEATURES
+# Out-of-position pace and track interactions each improved 2024 and 2025 calibration; 2026 (11 races) was worse.
+FEATURES = QUALI_FEATURES + OOP_FEATURES + TRACK_FEATURES
 
 _PACE = QUALI_FEATURES + [
     "LongRunPct", "LongRunRank", "LongRunTeammatePct", "LongRunLaps", "SprintPosition", "SprintGain",
@@ -59,6 +60,7 @@ FEATURE_SETS = {
     "quali_form": QUALI_FEATURES + FORM_FEATURES,
     "quali_oop": QUALI_FEATURES + OOP_FEATURES,
     "quali_form_practice": QUALI_FEATURES + FORM_FEATURES + PRACTICE_FEATURES + OOP_FEATURES,
+    "quali_oop_track": QUALI_FEATURES + OOP_FEATURES + TRACK_FEATURES,
 }
 
 
@@ -213,12 +215,17 @@ def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.Dat
         "TrkGridFinishCorr": ("GridFinishCorr", None), "TrkSCRate": ("HadSC", None)})
     df = df.merge(track_hist.drop(columns="Location"), on=RACE_KEYS, how="left")
 
+    overtaking = 1 - df["TrkGridFinishCorr"]
+    df["GridXOvertaking"] = df["Grid"] * overtaking
+    df["OopXOvertaking"] = df["OutOfPosition"] * overtaking
+    df["GridXSafetyCar"] = df["Grid"] * df["TrkSCRate"]
+
     df = df.merge(conditions.drop(columns=CONDITION_OUTCOME_COLS, errors="ignore"), on=RACE_KEYS, how="left")
     df["EraIndex"] = df["Season"].map(config.era_index)
     era_first_idx = df.groupby("EraIndex")["RaceIdx"].transform("min")
     df["RacesIntoEra"] = (df["RaceIdx"] - era_first_idx).astype(float)
 
     df = df.sort_values(["RaceIdx", "QPosition"]).reset_index(drop=True)
-    for col in ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES + PRACTICE_FEATURES + OOP_FEATURES:
+    for col in ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES + PRACTICE_FEATURES + OOP_FEATURES + TRACK_FEATURES:
         df[col] = pd.to_numeric(df[col], errors="coerce").astype(float)
     return df

@@ -72,7 +72,7 @@ def test_saved_file_is_a_complete_page(tmp_path):
 
 def test_missing_prediction_is_reported(tmp_path, monkeypatch):
     from f1pred import report
-    monkeypatch.setattr(report, "PREDICTIONS_DIR", tmp_path)
+    monkeypatch.setattr(report.config, "PREDICTIONS_DIR", tmp_path)
     with pytest.raises(SystemExit):
         report.run(2026, 99)
 

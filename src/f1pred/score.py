@@ -5,12 +5,10 @@ import pandas as pd
 
 from f1pred import build, config, evaluate, fetch
 
-PREDICTIONS_DIR = config.PROCESSED_DIR / "predictions"
-
 
 def load_predictions(season: int | None = None) -> list[tuple[int, int, pd.DataFrame]]:
     out = []
-    for path in sorted(PREDICTIONS_DIR.glob("*_R*.csv")):
+    for path in sorted(config.PREDICTIONS_DIR.glob("*/round_*/*_R*.csv")):
         season_str, rnd_str = path.stem.split("_R")
         if season is None or int(season_str) == season:
             out.append((int(season_str), int(rnd_str), pd.read_csv(path)))
@@ -38,7 +36,7 @@ def is_pre_race(pred: pd.DataFrame) -> bool:
 def run(season: int | None = None, refresh: bool = False, include_backfilled: bool = False) -> pd.DataFrame:
     predictions = load_predictions(season)
     if not predictions:
-        raise SystemExit(f"No saved predictions in {PREDICTIONS_DIR}")
+        raise SystemExit(f"No saved predictions in {config.PREDICTIONS_DIR}")
     if refresh:
         for s in sorted({s for s, _, _ in predictions}):
             fetch.run([s], rounds=sorted({r for s2, r, _ in predictions if s2 == s}))
@@ -65,7 +63,7 @@ def run(season: int | None = None, refresh: bool = False, include_backfilled: bo
         return pd.DataFrame()
 
     card = pd.DataFrame(rows)
-    card.to_csv(PREDICTIONS_DIR / "scorecard.csv", index=False)
+    card.to_csv(config.PREDICTIONS_DIR / "scorecard.csv", index=False)
     print(card.round(3).to_string(index=False))
     print(f"\n{len(card)} race(s) scored")
     print(evaluate.summarize(card).to_string())

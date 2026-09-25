@@ -6,6 +6,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
 PROCESSED_DIR = DATA_DIR / "processed"
+PREDICTIONS_DIR = PROCESSED_DIR / "predictions"
 CACHE_DIR = RAW_DIR / "fastf1_cache"
 LOG_PATH = RAW_DIR / "extraction_log.csv"
 # One row per team per season; add the new season's rows before its first race.
@@ -55,3 +56,7 @@ def seasons() -> list[int]:
 
 def era_index(season: int) -> int:
     return sum(season >= start for start in ERA_STARTS) - 1
+
+
+def prediction_path(season: int, rnd: int, suffix: str) -> Path:
+    return PREDICTIONS_DIR / str(season) / f"round_{rnd:02d}" / f"{season}_R{rnd:02d}{suffix}"

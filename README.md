@@ -35,9 +35,9 @@ takes a few minutes to land, so give it about 90 minutes after the session start
 python -m f1pred weekend 2026 16
 ```
 
-That fetches the new sessions, rebuilds, predicts and writes `data/processed/predictions/2026_R16.html`.
-Open it in any browser, or send the matching `.png`, a full-page picture of it made with your
-installed Edge or Chrome. If qualifying isn't out yet it stops and says so; add `--wait 60` to keep
+That fetches the new sessions, rebuilds, predicts and saves everything for the race in
+`data/processed/predictions/2026/round_16/`. Open the `.html` in any browser, or send the `.png`, a
+full-page picture made with your installed Edge or Chrome. If qualifying isn't out yet it stops and says so; add `--wait 60` to keep
 retrying every 5 minutes for up to an hour.
 
 The same thing as separate steps, e.g. to re-run just the prediction after adding a penalty:

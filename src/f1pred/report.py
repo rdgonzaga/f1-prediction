@@ -9,7 +9,6 @@ import pandas as pd
 
 from f1pred import config
 
-PREDICTIONS_DIR = config.PROCESSED_DIR / "predictions"
 CHART_ROWS = 10
 MANILA_OFFSET = pd.Timedelta(hours=8)
 SCREENSHOT_WIDTH = 960
@@ -414,7 +413,7 @@ def screenshot(html_path: Path, width: int = SCREENSHOT_WIDTH) -> Path | None:
 
 
 def run(season: int, rnd: int, png: bool = True) -> Path:
-    csv_path = PREDICTIONS_DIR / f"{season}_R{rnd:02d}.csv"
+    csv_path = config.prediction_path(season, rnd, ".csv")
     if not csv_path.exists():
         raise SystemExit(f"No saved prediction at {csv_path}; run `predict` first.")
     out_path = csv_path.with_suffix(".html")

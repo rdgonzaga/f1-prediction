@@ -107,9 +107,9 @@ def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int]
     warnings = [i.removeprefix(race_label) for i in build.data_checks(entries, conditions, laps)
                 if i.startswith(race_label) and not i.endswith("no race results")]
 
-    out_dir = config.PROCESSED_DIR / "predictions"
+    stem = config.prediction_path(season, rnd, "")
+    out_dir = stem.parent
     out_dir.mkdir(parents=True, exist_ok=True)
-    stem = out_dir / f"{season}_R{rnd:02d}"
     overrides = describe_overrides(penalties, pitlane)
     pre_race = not already_run
     out.assign(

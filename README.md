@@ -36,7 +36,8 @@ python -m f1pred weekend 2026 16
 ```
 
 That fetches the new sessions, rebuilds, predicts and writes `data/processed/predictions/2026_R16.html`.
-Open it in any browser. If qualifying isn't out yet it stops and says so; add `--wait 60` to keep
+Open it in any browser, or send the matching `.png`, a full-page picture of it made with your
+installed Edge or Chrome. If qualifying isn't out yet it stops and says so; add `--wait 60` to keep
 retrying every 5 minutes for up to an hour.
 
 The same thing as separate steps, e.g. to re-run just the prediction after adding a penalty:

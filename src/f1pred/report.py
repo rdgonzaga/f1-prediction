@@ -12,6 +12,8 @@ from f1pred import config
 PREDICTIONS_DIR = config.PROCESSED_DIR / "predictions"
 CHART_ROWS = 10
 MANILA_OFFSET = pd.Timedelta(hours=8)
+SCREENSHOT_WIDTH = 960
+BROWSER_CHANNELS = ["msedge", "chrome"]
 
 # Constructor colours as published by FastF1 for 2026.
 TEAM_COLORS = {
@@ -387,11 +389,38 @@ def standalone(fragment: str) -> str:
             f'{head}</head>\n<body>\n<div class="wrap">{body}</body>\n</html>\n')
 
 
-def run(season: int, rnd: int) -> Path:
+def screenshot(html_path: Path, width: int = SCREENSHOT_WIDTH) -> Path | None:
+    try:
+        from playwright.sync_api import Error, sync_playwright
+    except ImportError:
+        print("Skipping the PNG: `pip install playwright` to get one.")
+        return None
+    png_path = html_path.with_suffix(".png")
+    with sync_playwright() as p:
+        for channel in BROWSER_CHANNELS:
+            try:
+                browser = p.chromium.launch(channel=channel)
+                break
+            except Error:
+                continue
+        else:
+            print("Skipping the PNG: no Edge or Chrome found.")
+            return None
+        page = browser.new_page(viewport={"width": width, "height": 800}, device_scale_factor=2, color_scheme="dark")
+        page.goto(html_path.resolve().as_uri(), wait_until="networkidle")
+        page.screenshot(path=png_path, full_page=True)
+        browser.close()
+    return png_path
+
+
+def run(season: int, rnd: int, png: bool = True) -> Path:
     csv_path = PREDICTIONS_DIR / f"{season}_R{rnd:02d}.csv"
     if not csv_path.exists():
         raise SystemExit(f"No saved prediction at {csv_path}; run `predict` first.")
     out_path = csv_path.with_suffix(".html")
     out_path.write_text(standalone(render(csv_path)), encoding="utf-8")
     print(f"Wrote {out_path}\nOpen it in a browser, or send the path to Claude to publish a shareable link.")
+    png_path = screenshot(out_path) if png else None
+    if png_path:
+        print(f"Wrote {png_path}, ready to send as a picture.")
     return out_path

@@ -4,7 +4,8 @@ import pandas.testing as pdt
 import pytest
 
 from f1pred.features import (
-    ALL_FEATURES, CONDITION_OUTCOME_COLS, OUTCOME_COLS, PENALTY_FEATURES, PU_FEATURES, build_features, long_run_pace,
+    ALL_FEATURES, CONDITION_OUTCOME_COLS, OUTCOME_COLS, PENALTY_FEATURES, PRACTICE_FEATURES, PU_FEATURES, build_features,
+    long_run_pace, practice_pace,
 )
 
 TEAMS = ["red", "blue", "green"]
@@ -69,7 +70,7 @@ def test_features_do_not_use_target_race_outcome():
 
     def pick(df):
         rows = df[(df["Season"] == target[0]) & (df["RoundNumber"] == target[1])]
-        cols = ["DriverId"] + ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES
+        cols = ["DriverId"] + ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES + PRACTICE_FEATURES
         return rows.sort_values("DriverId")[cols].reset_index(drop=True)
 
     pdt.assert_frame_equal(pick(full), pick(blind))
@@ -80,7 +81,7 @@ def test_one_row_per_driver_race_and_all_features_numeric():
     feats = build_features(entries, laps, conditions)
     assert len(feats) == len(entries)
     assert not feats.duplicated(["Season", "RoundNumber", "DriverId"]).any()
-    assert all(feats[c].dtype == float for c in ALL_FEATURES)
+    assert all(feats[c].dtype == float for c in ALL_FEATURES + PRACTICE_FEATURES)
 
 
 def test_first_race_has_no_history():
@@ -135,3 +136,33 @@ def test_long_run_pace_excludes_out_laps_and_short_stints():
 
     short = one_race[one_race["LapNumber"] <= 4]
     assert long_run_pace(short).empty
+
+
+def test_practice_pace_uses_best_clean_lap_per_session():
+    _, laps, _ = make_data()
+    one_race = laps[(laps["Season"] == 2024) & (laps["RoundNumber"] == 1)].copy()
+    slowest = one_race.groupby("Driver")["LapTimeSeconds"].min().idxmax()
+    dirty = one_race["Driver"].eq(slowest) & one_race["LapNumber"].isin([2, 3, 4])
+    one_race.loc[dirty, "LapTimeSeconds"] = 80.0
+    one_race.loc[dirty & one_race["LapNumber"].eq(2), "Deleted"] = True
+    one_race.loc[dirty & one_race["LapNumber"].eq(3), "PitInTimeSeconds"] = 50.0
+    one_race.loc[dirty & one_race["LapNumber"].eq(4), "TrackStatus"] = "4"
+
+    pace = practice_pace(one_race).set_index("Abbreviation")
+    assert pace["PracticeGapPct"].min() == 0
+    assert pace["PracticeGapPct"].idxmax() == slowest
+    assert (pace["PracticeSessions"] == 1).all()
+
+
+def test_fast_in_practice_slow_in_quali_has_negative_practice_minus_quali():
+    entries, laps, conditions = make_data()
+    race = (laps["Season"] == 2026) & (laps["RoundNumber"] == 2)
+    target = entries[(entries["Season"] == 2026) & (entries["RoundNumber"] == 2)]
+    last = target.loc[target["QPosition"].idxmax(), "Abbreviation"]
+    laps.loc[race & laps["Driver"].eq(last), "LapTimeSeconds"] -= 5
+
+    feats = build_features(entries, laps, conditions, POWER_UNITS)
+    row = feats[(feats["Season"] == 2026) & (feats["RoundNumber"] == 2) & (feats["Abbreviation"] == last)].iloc[0]
+    assert row["PracticeGapPct"] == 0
+    assert row["PracticeRank"] == 1
+    assert row["PracticeMinusQuali"] == 1 - row["QPosition"] < 0

@@ -34,6 +34,8 @@ RACE_CONSTANT_FEATURES = [
 # Candidate features kept out of FEATURES until a full-data backtest shows they help.
 PU_FEATURES = ["PuQPosLast3", "PuFinishLast3"]
 PENALTY_FEATURES = ["GridMinusQuali"]
+PRACTICE_FEATURES = ["PracticeGapPct", "PracticeRank", "PracticeTeammatePct", "PracticeMinusQuali"]
+PRACTICE_SESSIONS = ["FP1", "FP2", "FP3"]
 
 _PACE = FEATURES + ["LongRunPct", "LongRunRank", "LongRunTeammatePct", "LongRunLaps", "SprintPosition", "SprintGain"]
 FEATURE_SETS = {
@@ -46,19 +48,35 @@ FEATURE_SETS = {
     "all_pu": ALL_FEATURES + PU_FEATURES,
     "quali_pen": FEATURES + PENALTY_FEATURES,
     "all_pen": ALL_FEATURES + PENALTY_FEATURES,
+    "quali_practice": FEATURES + PRACTICE_FEATURES,
+    "pace_practice": _PACE + PRACTICE_FEATURES,
 }
 
 
-def long_run_pace(laps: pd.DataFrame) -> pd.DataFrame:
-    clean = laps[
+def _clean_laps(laps: pd.DataFrame) -> pd.DataFrame:
+    return laps[
         laps["IsAccurate"].eq(True)
         & ~laps["Deleted"].eq(True)
         & laps["PitInTimeSeconds"].isna()
         & laps["PitOutTimeSeconds"].isna()
         & laps["TrackStatus"].astype(str).eq("1")
         & laps["LapTimeSeconds"].notna()
-        & ~(laps["SessionCode"].eq("S") & laps["LapNumber"].le(1))
     ]
+
+
+def practice_pace(laps: pd.DataFrame) -> pd.DataFrame:
+    clean = _clean_laps(laps[laps["SessionCode"].isin(PRACTICE_SESSIONS)])
+    best = clean.groupby(RACE_KEYS + ["SessionCode", "Driver"])["LapTimeSeconds"].min().reset_index()
+    fastest = best.groupby(RACE_KEYS + ["SessionCode"])["LapTimeSeconds"].transform("min")
+    best["Gap"] = (best["LapTimeSeconds"] / fastest - 1) * 100
+    pace = best.groupby(RACE_KEYS + ["Driver"]).agg(
+        PracticeGapPct=("Gap", "min"), PracticeSessions=("Gap", "size"))
+    return pace.reset_index().rename(columns={"Driver": "Abbreviation"})
+
+
+def long_run_pace(laps: pd.DataFrame) -> pd.DataFrame:
+    clean = _clean_laps(laps)
+    clean = clean[~(clean["SessionCode"].eq("S") & clean["LapNumber"].le(1))]
     stint_keys = RACE_KEYS + ["SessionCode", "Driver", "Stint", "Compound"]
     stint_median = clean.groupby(stint_keys)["LapTimeSeconds"].transform("median")
     clean = clean[clean["LapTimeSeconds"] <= stint_median * 1.04]
@@ -131,6 +149,13 @@ def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.Dat
         df.groupby(RACE_KEYS + ["TeamId"])["LongRunPct"].transform("sum") - df["LongRunPct"]
     ) / (df.groupby(RACE_KEYS + ["TeamId"])["LongRunPct"].transform("count") - 1)
 
+    df = df.merge(practice_pace(laps), on=RACE_KEYS + ["Abbreviation"], how="left")
+    df["PracticeRank"] = df.groupby(RACE_KEYS)["PracticeGapPct"].rank()
+    df["PracticeTeammatePct"] = df["PracticeGapPct"] - (
+        df.groupby(RACE_KEYS + ["TeamId"])["PracticeGapPct"].transform("sum") - df["PracticeGapPct"]
+    ) / (df.groupby(RACE_KEYS + ["TeamId"])["PracticeGapPct"].transform("count") - 1)
+    df["PracticeMinusQuali"] = df["PracticeRank"] - df["QPosition"]
+
     df["Gain"] = df["Grid"] - df["FinishPosition"]
     classified = df["Classified"].astype("string")
     df["Dnf"] = classified.isin(DNF_CODES).astype(float).where(classified.notna())
@@ -180,6 +205,6 @@ def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.Dat
     df["RacesIntoEra"] = (df["RaceIdx"] - era_first_idx).astype(float)
 
     df = df.sort_values(["RaceIdx", "QPosition"]).reset_index(drop=True)
-    for col in ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES:
+    for col in ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES + PRACTICE_FEATURES:
         df[col] = pd.to_numeric(df[col], errors="coerce").astype(float)
     return df

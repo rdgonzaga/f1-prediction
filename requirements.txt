@@ -20,6 +20,11 @@ pillow==12.2.0
 seaborn==0.13.2
 timple==0.1.8
 
+# Report screenshot (drives an installed Edge or Chrome)
+greenlet==3.5.6
+playwright==1.63.0
+pyee==13.0.1
+
 # Formula 1 Domain & Real-Time APIs
 fastf1==3.8.2
 signalrcore==1.0.2

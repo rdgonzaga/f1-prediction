@@ -16,6 +16,10 @@ LOG_COLUMNS = [
 ]
 
 
+QUEUE_COLUMNS = ["SessionKey", "Season", "RoundNumber", "EventName", "EventFormat", "Country", "Location",
+                 "SessionName", "SessionCode", "SessionStartUTC"]
+
+
 def td_to_seconds(series: pd.Series) -> pd.Series:
     return pd.to_timedelta(series, errors="coerce").dt.total_seconds()
 
@@ -65,7 +69,7 @@ def build_queue(seasons: list[int], max_events: int | None = None,
                     "SessionCode": code,
                     "SessionStartUTC": start,
                 })
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=QUEUE_COLUMNS)
 
 
 def load_log() -> pd.DataFrame:

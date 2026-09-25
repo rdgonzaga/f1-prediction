@@ -13,10 +13,9 @@ DNF_CODES = {"R", "D", "E", "N", "F"}
 
 _GRID = ["Grid", "GridPitlane"]
 
-# Grid + qualifying was the only set to beat the grid baseline on the full 2022-2026 backtest.
-FEATURES = _GRID + ["QPosition", "QGapPct", "QGapTeammatePct"]
+QUALI_FEATURES = _GRID + ["QPosition", "QGapPct", "QGapTeammatePct"]
 
-ALL_FEATURES = FEATURES + [
+ALL_FEATURES = QUALI_FEATURES + [
     "SprintPosition", "SprintGain",
     "LongRunPct", "LongRunRank", "LongRunTeammatePct", "LongRunLaps",
     "DrvFinishLast3", "DrvFinishLast5", "DrvPointsLast5", "DrvGainLast5", "DrvDnfSeason",
@@ -36,20 +35,30 @@ PU_FEATURES = ["PuQPosLast3", "PuFinishLast3"]
 PENALTY_FEATURES = ["GridMinusQuali"]
 PRACTICE_FEATURES = ["PracticeGapPct", "PracticeRank", "PracticeTeammatePct", "PracticeMinusQuali"]
 PRACTICE_SESSIONS = ["FP1", "FP2", "FP3"]
+FORM_FEATURES = ["DrvFinishLast3", "DrvPointsLast5", "TeamBestFinishLast3", "TeamQPosLast3"]
+OOP_FEATURES = ["ExpectedRank", "OutOfPosition"]
 
-_PACE = FEATURES + ["LongRunPct", "LongRunRank", "LongRunTeammatePct", "LongRunLaps", "SprintPosition", "SprintGain"]
+# Out-of-position pace improved 2024 and 2025 calibration over grid + quali; 2026 (11 races) was worse.
+FEATURES = QUALI_FEATURES + OOP_FEATURES
+
+_PACE = QUALI_FEATURES + [
+    "LongRunPct", "LongRunRank", "LongRunTeammatePct", "LongRunLaps", "SprintPosition", "SprintGain",
+]
 FEATURE_SETS = {
     "grid": _GRID,
-    "quali": FEATURES,
+    "quali": QUALI_FEATURES,
     "pace": _PACE,
     "pace_pu": _PACE + PU_FEATURES,
     "no_race_constants": [f for f in ALL_FEATURES if f not in RACE_CONSTANT_FEATURES],
     "all": ALL_FEATURES,
     "all_pu": ALL_FEATURES + PU_FEATURES,
-    "quali_pen": FEATURES + PENALTY_FEATURES,
+    "quali_pen": QUALI_FEATURES + PENALTY_FEATURES,
     "all_pen": ALL_FEATURES + PENALTY_FEATURES,
-    "quali_practice": FEATURES + PRACTICE_FEATURES,
+    "quali_practice": QUALI_FEATURES + PRACTICE_FEATURES,
     "pace_practice": _PACE + PRACTICE_FEATURES,
+    "quali_form": QUALI_FEATURES + FORM_FEATURES,
+    "quali_oop": QUALI_FEATURES + OOP_FEATURES,
+    "quali_form_practice": QUALI_FEATURES + FORM_FEATURES + PRACTICE_FEATURES + OOP_FEATURES,
 }
 
 
@@ -179,6 +188,11 @@ def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.Dat
         "TeamBestFinishLast3": ("BestFinish", 3), "TeamQPosLast3": ("MeanQPos", 3)})
     df = df.merge(team_hist, on=RACE_KEYS + ["TeamId"], how="left")
 
+    signals = [df["PracticeRank"]] + [df.groupby(RACE_KEYS)[c].rank() for c in ["DrvFinishLast3", "TeamQPosLast3"]]
+    df["PaceScore"] = pd.concat(signals, axis=1).mean(axis=1)
+    df["ExpectedRank"] = df.groupby(RACE_KEYS)["PaceScore"].rank()
+    df["OutOfPosition"] = df["Grid"] - df["ExpectedRank"]
+
     df = df.merge(power_units[["Season", "TeamId", "PowerUnit"]], on=["Season", "TeamId"], how="left")
     pu_race = df.groupby(RACE_KEYS + ["RaceIdx", "PowerUnit"]).agg(
         MeanQPos=("QPosition", "mean"), MeanFinish=("FinishPosition", "mean")).reset_index()
@@ -205,6 +219,6 @@ def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.Dat
     df["RacesIntoEra"] = (df["RaceIdx"] - era_first_idx).astype(float)
 
     df = df.sort_values(["RaceIdx", "QPosition"]).reset_index(drop=True)
-    for col in ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES + PRACTICE_FEATURES:
+    for col in ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES + PRACTICE_FEATURES + OOP_FEATURES:
         df[col] = pd.to_numeric(df[col], errors="coerce").astype(float)
     return df

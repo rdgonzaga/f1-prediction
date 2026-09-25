@@ -2,7 +2,7 @@
 import argparse
 
 from f1pred import config
-from f1pred.features import FEATURE_SETS
+from f1pred.features import FEATURE_SETS, FEATURES
 
 
 def main() -> None:
@@ -70,11 +70,17 @@ def main() -> None:
             print("\n" + evaluate.summarize(results).to_string())
 
         if args.probabilities:
+            import pandas as pd
+
             from f1pred import probabilities
-            races = list(evaluate.walk_forward(feats, evaluate.season_race_indices(feats, season, args.start_round)))
+            indices = evaluate.season_race_indices(feats, season, args.start_round)
+            table = {}
+            sets = {n: FEATURE_SETS[n] for n in args.features} if args.features else {"default": FEATURES}
+            for name, features in sets.items():
+                races = list(evaluate.walk_forward(feats, indices, features))
+                table[name] = probabilities.walk_forward_calibration(races, feats)
             print("\nProbability calibration (walk-forward):")
-            for name, value in probabilities.walk_forward_calibration(races, feats).items():
-                print(f"  {name}: {value:.3f}")
+            print(pd.DataFrame(table).round(3).to_string())
 
     if args.command == "predict":
         from f1pred import predict

@@ -29,6 +29,11 @@ def normalize_location(name: str) -> str:
     return config.LOCATION_ALIASES.get(key, key)
 
 
+def _lookup(entries: pd.DataFrame, keys: list[str], col: str) -> pd.Series:
+    known = entries.dropna(subset=keys + [col]).sort_values(RACE_KEYS).drop_duplicates(keys, keep="last")
+    return entries[keys].merge(known[keys + [col]], on=keys, how="left")[col].set_axis(entries.index)
+
+
 def build_entries(results: pd.DataFrame) -> pd.DataFrame:
     event_cols = RACE_KEYS + ["EventName", "EventFormat", "Location"]
     driver_cols = ["DriverId", "Abbreviation", "TeamId", "TeamName"]
@@ -58,11 +63,10 @@ def build_entries(results: pd.DataFrame) -> pd.DataFrame:
     entries = quali.merge(race, on=keys, how="outer", suffixes=("", "_r"))
     for col in event_cols[2:] + driver_cols[1:]:
         entries[col] = entries[col].fillna(entries.pop(f"{col}_r"))
-    # Quali results for an upcoming race can lack TeamId; the team name still identifies it.
-    known = entries.dropna(subset=["TeamId", "TeamName"]).drop_duplicates(["Season", "TeamName"], keep="last")
-    team_ids = known.set_index(["Season", "TeamName"])["TeamId"]
-    fill = pd.Series(list(zip(entries["Season"], entries["TeamName"])), index=entries.index).map(team_ids)
-    entries["TeamId"] = entries["TeamId"].fillna(fill)
+    # Quali results for an upcoming race can lack TeamId and DriverId; the names still identify them.
+    entries["TeamId"] = entries["TeamId"].fillna(_lookup(entries, ["Season", "TeamName"], "TeamId"))
+    entries["DriverId"] = entries["DriverId"].fillna(_lookup(entries, ["Season", "Abbreviation"], "DriverId"))
+    entries["DriverId"] = entries["DriverId"].fillna(_lookup(entries, ["Abbreviation"], "DriverId"))
     entries = entries.merge(sprint, on=keys, how="left")
     entries["Location"] = entries["Location"].map(normalize_location)
     return entries.sort_values(RACE_KEYS + ["QPosition"]).reset_index(drop=True)

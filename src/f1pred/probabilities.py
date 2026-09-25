@@ -10,6 +10,7 @@ from f1pred.features import FEATURES
 TEMPERATURES = np.geomspace(0.1, 10, 81)
 DEFAULT_TEMPERATURE = 1.0
 MIN_CALIBRATION_RACES = 5
+OUT_OF_POSITION = 6
 
 
 def simulate_positions(scores, temperature: float, n_sims: int = 20_000, seed: int = 0,
@@ -88,6 +89,10 @@ def calibration_report(scored: list[pd.DataFrame]) -> dict[str, float]:
         }
         if "DnfPct" in race:
             row["DnfBrier"] = ((race["DnfPct"] / 100 - race["Dnf"]) ** 2).mean()
+        if "OutOfPosition" in race:
+            oop = race["OutOfPosition"] >= OUT_OF_POSITION
+            row["OopPointsBrier"] = ((race.loc[oop, "PointsPct"] / 100 - (actual[oop] <= 10)) ** 2).mean()
+            row["OopFinishMAE"] = (race.loc[oop, "PredictedPosition"] - actual[oop]).abs().mean()
         rows.append(row)
     return pd.DataFrame(rows).mean().to_dict()
 

@@ -4,7 +4,8 @@ import pandas.testing as pdt
 import pytest
 
 from f1pred.features import (
-    ALL_FEATURES, CONDITION_OUTCOME_COLS, OUTCOME_COLS, PENALTY_FEATURES, PRACTICE_FEATURES, PU_FEATURES, build_features,
+    ALL_FEATURES, CONDITION_OUTCOME_COLS, OOP_FEATURES, OUTCOME_COLS, PENALTY_FEATURES, PRACTICE_FEATURES, PU_FEATURES,
+    build_features,
     long_run_pace, practice_pace,
 )
 
@@ -70,7 +71,7 @@ def test_features_do_not_use_target_race_outcome():
 
     def pick(df):
         rows = df[(df["Season"] == target[0]) & (df["RoundNumber"] == target[1])]
-        cols = ["DriverId"] + ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES + PRACTICE_FEATURES
+        cols = ["DriverId"] + ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES + PRACTICE_FEATURES + OOP_FEATURES
         return rows.sort_values("DriverId")[cols].reset_index(drop=True)
 
     pdt.assert_frame_equal(pick(full), pick(blind))
@@ -81,7 +82,7 @@ def test_one_row_per_driver_race_and_all_features_numeric():
     feats = build_features(entries, laps, conditions)
     assert len(feats) == len(entries)
     assert not feats.duplicated(["Season", "RoundNumber", "DriverId"]).any()
-    assert all(feats[c].dtype == float for c in ALL_FEATURES + PRACTICE_FEATURES)
+    assert all(feats[c].dtype == float for c in ALL_FEATURES + PRACTICE_FEATURES + OOP_FEATURES)
 
 
 def test_first_race_has_no_history():
@@ -166,3 +167,19 @@ def test_fast_in_practice_slow_in_quali_has_negative_practice_minus_quali():
     assert row["PracticeGapPct"] == 0
     assert row["PracticeRank"] == 1
     assert row["PracticeMinusQuali"] == 1 - row["QPosition"] < 0
+
+
+def test_fast_driver_starting_at_the_back_is_out_of_position():
+    entries, laps, conditions = make_data()
+    target = (entries["Season"] == 2026) & (entries["RoundNumber"] == 3)
+    prior = (entries["Season"] == 2026) & (entries["RoundNumber"] < 3)
+    entries.loc[prior & entries["Abbreviation"].eq("D00"), "FinishPosition"] = 1.0
+    last = entries.loc[target, "QPosition"].max()
+    entries.loc[target & entries["Abbreviation"].eq("D00"), ["QPosition", "GridPosition"]] = last
+    race = (laps["Season"] == 2026) & (laps["RoundNumber"] == 3)
+    laps.loc[race & laps["Driver"].eq("D00"), "LapTimeSeconds"] -= 5
+
+    feats = build_features(entries, laps, conditions, POWER_UNITS)
+    row = feats[(feats["Season"] == 2026) & (feats["RoundNumber"] == 3) & (feats["Abbreviation"] == "D00")].iloc[0]
+    assert row["ExpectedRank"] <= 2
+    assert row["OutOfPosition"] >= last - 2

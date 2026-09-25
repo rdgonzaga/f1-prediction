@@ -35,11 +35,12 @@ def test_only_flagged_predictions_count_as_pre_race():
 
 
 def test_run_skips_backfilled_and_unfinished_races(tmp_path, monkeypatch):
-    pred_frame(pre_race=True).to_csv(tmp_path / "2026_R01.csv", index=False)
-    pred_frame().to_csv(tmp_path / "2026_R02.csv", index=False)
-    pred_frame(pre_race=True).to_csv(tmp_path / "2026_R03.csv", index=False)
+    monkeypatch.setattr(score.config, "PREDICTIONS_DIR", tmp_path)
+    for rnd, pre_race in [(1, True), (2, None), (3, True)]:
+        path = score.config.prediction_path(2026, rnd, ".csv")
+        path.parent.mkdir(parents=True)
+        (pred_frame(pre_race=pre_race) if pre_race else pred_frame()).to_csv(path, index=False)
     entries = pd.concat([actual_frame(rnd=1), actual_frame(rnd=2)], ignore_index=True)
-    monkeypatch.setattr(score, "PREDICTIONS_DIR", tmp_path)
     monkeypatch.setattr(score.build, "load_processed", lambda: (entries, None, None))
 
     card = score.run()

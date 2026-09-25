@@ -75,3 +75,11 @@ def test_driver_missing_id_in_quali_is_not_duplicated():
     assert bravo["QPosition"] == 2.0
     assert bravo["FinishPosition"] == 1.0
     assert bravo["TeamId"] == "team"
+
+
+def test_upcoming_race_without_team_id_takes_it_from_team_name():
+    past = [result_row("Q", "a", "alpha", 1.0), result_row("R", "a", "alpha", 1.0, grid=1.0)]
+    upcoming = {**result_row("Q", "a", "alpha", 1.0), "RoundNumber": 2, "TeamId": None}
+    entries = build_entries(pd.DataFrame(past + [upcoming]))
+
+    assert (entries["TeamId"] == "team").all()

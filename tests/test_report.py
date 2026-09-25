@@ -75,3 +75,11 @@ def test_missing_prediction_is_reported(tmp_path, monkeypatch):
     monkeypatch.setattr(report, "PREDICTIONS_DIR", tmp_path)
     with pytest.raises(SystemExit):
         report.run(2026, 99)
+
+
+def test_png_is_skipped_without_playwright(tmp_path, monkeypatch):
+    import sys
+
+    from f1pred import report
+    monkeypatch.setitem(sys.modules, "playwright.sync_api", None)
+    assert report.screenshot(tmp_path / "page.html") is None

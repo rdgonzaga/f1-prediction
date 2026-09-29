@@ -18,13 +18,16 @@ came out worse.
 The percentages are the real output, and a starting grid can't give you those. The grid tells you
 Norris starts first. It can't tell you he's 31% to win, or that Stroll has a 33% chance of not
 finishing. Those numbers hold up against races that already happened: across 2025 the eventual
-winner scored 1.19 on log loss, against 2.99 for treating every driver as equally likely.
+winner scored 1.11 on log loss, against 2.99 for treating every driver as equally likely.
 
 The retirement estimate is the weak one. Over 2025 it scores exactly the same as just using the
-field's average failure rate, so no better. It only pulls ahead in 2026 (0.139 against 0.149), when
-reliability shifted and a per-driver estimate started to matter.
+field's recent failure rate (0.090 Brier each), so no better. It only pulls ahead in 2026 (0.144
+against 0.155), when reliability shifted and a per-driver estimate started to matter.
 
 So read the order as "the grid, give or take", and pay attention to the numbers next to it.
+
+Real predictions, made after qualifying and scored after the race, start at Baku 2026. The running
+tally is in `data/processed/predictions/scorecard.csv`.
 
 ## A race weekend
 
@@ -37,8 +40,8 @@ python -m f1pred weekend 2026 16
 
 That fetches the new sessions, rebuilds, predicts and saves everything for the race in
 `data/processed/predictions/2026/round_16/`. Open the `.html` in any browser, or send the `.png`, a
-full-page picture made with your installed Edge or Chrome. If qualifying isn't out yet it stops and says so; add `--wait 60` to keep
-retrying every 5 minutes for up to an hour.
+full-page picture made with your installed Edge or Chrome. If qualifying isn't out yet it stops and
+says so; add `--wait 60` to keep retrying every 5 minutes for up to an hour.
 
 The same thing as separate steps, e.g. to re-run just the prediction after adding a penalty:
 
@@ -52,7 +55,8 @@ python -m f1pred report 2026 16
 Use the round number rather than the race name. A number is used as-is, while a name gets
 fuzzy-matched and can quietly land on the wrong event.
 
-Once the race is over, `python -m f1pred score --refresh` tells you how it did.
+Once the race is over, `python -m f1pred score --refresh` tells you how it did and updates
+`scorecard.csv`.
 
 **Grid penalties you have to enter yourself:**
 
@@ -76,7 +80,9 @@ has, and ignores sessions that haven't happened yet. FastF1 allows 500 calls an 
 download takes a few hours, but week to week it only grabs the new sessions.
 
 `build` combines the downloads and runs sanity checks. `backtest` replays past races, which is the
-only honest way to tell whether a change helped.
+only honest way to tell whether a change helped. Add `--probabilities` to score the percentages
+too, and judge changes on those (winner log loss, podium and points Brier) over the full 2024 and
+2025 seasons. Beating grid order by a hair on 2026 alone is noise.
 
 ## How it works
 
@@ -129,8 +135,9 @@ kernel.
 ## Layout
 
 ```
-src/f1pred/   fetch, build, features, model, evaluate, probabilities, dnf, predict, report, score
-tests/        leakage, metric, penalty, scoring and page tests
+src/f1pred/   fetch, build, features, model, evaluate, probabilities, dnf, predict, report,
+              score, weekend, plotting
+tests/        one test file per module, plus leakage checks in test_features.py
 notebooks/    exploration and review only
 reference/    power_units.csv, engine supplier per team per season
 ```

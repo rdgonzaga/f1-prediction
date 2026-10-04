@@ -43,6 +43,10 @@ def build_entries(results: pd.DataFrame) -> pd.DataFrame:
     results[driver_cols] = results[driver_cols].replace(["", "nan", "None"], pd.NA)
     identity = results.groupby(RACE_KEYS + ["DriverNumber"])[driver_cols]
     results[driver_cols] = identity.transform(lambda s: s.ffill().bfill())
+    # Fresh results can lack TeamId and DriverId; fill before merging or NA keys cross-join.
+    results["TeamId"] = results["TeamId"].fillna(_lookup(results, ["Season", "TeamName"], "TeamId"))
+    results["DriverId"] = results["DriverId"].fillna(_lookup(results, ["Season", "Abbreviation"], "DriverId"))
+    results["DriverId"] = results["DriverId"].fillna(_lookup(results, ["Abbreviation"], "DriverId"))
 
     quali = results[results["SessionCode"] == "Q"]
     quali = quali[event_cols + driver_cols + ["Position", "Q1Seconds", "Q2Seconds", "Q3Seconds"]].rename(
@@ -63,10 +67,6 @@ def build_entries(results: pd.DataFrame) -> pd.DataFrame:
     entries = quali.merge(race, on=keys, how="outer", suffixes=("", "_r"))
     for col in event_cols[2:] + driver_cols[1:]:
         entries[col] = entries[col].fillna(entries.pop(f"{col}_r"))
-    # Quali results for an upcoming race can lack TeamId and DriverId; the names still identify them.
-    entries["TeamId"] = entries["TeamId"].fillna(_lookup(entries, ["Season", "TeamName"], "TeamId"))
-    entries["DriverId"] = entries["DriverId"].fillna(_lookup(entries, ["Season", "Abbreviation"], "DriverId"))
-    entries["DriverId"] = entries["DriverId"].fillna(_lookup(entries, ["Abbreviation"], "DriverId"))
     entries = entries.merge(sprint, on=keys, how="left")
     entries["Location"] = entries["Location"].map(normalize_location)
     return entries.sort_values(RACE_KEYS + ["QPosition"]).reset_index(drop=True)

@@ -48,3 +48,9 @@ def test_run_skips_backfilled_and_unfinished_races(tmp_path, monkeypatch):
     assert (tmp_path / "scorecard.csv").exists()
 
     assert list(score.run(include_backfilled=True)["RoundNumber"]) == [1, 2]
+    assert list(pd.read_csv(tmp_path / "scorecard.csv")["RoundNumber"]) == [1]
+
+
+def test_race_with_partial_results_is_not_scored():
+    partial = actual_frame().assign(Classified="")
+    assert score.score_race(pred_frame(), partial) is None

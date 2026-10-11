@@ -158,6 +158,13 @@ td.win { font-weight: 600; }
 .move { color: var(--ink-3); font-size: 13px; margin-left: 4px; }
 .move.up { color: var(--ink-2); font-weight: 600; }
 .risk { color: var(--signal); font-weight: 600; }
+td.res { color: var(--ink-2); }
+td.res.hit { color: var(--ink); font-weight: 600; }
+td.res.risk { color: var(--signal); }
+.nav { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; margin: 0 0 22px; }
+.nav a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--rule-strong); }
+.nav a:hover { color: var(--ink); border-color: var(--ink); }
+.nav .spacer { flex: 1; }
 
 .note { margin-top: 14px; max-width: 62ch; }
 .note p { margin: 0 0 12px; color: var(--ink-2); font-size: 15px; }
@@ -284,11 +291,24 @@ def _chart(rows: pd.DataFrame) -> str:
     return "".join(parts)
 
 
-def _table(pred: pd.DataFrame) -> str:
+def _result_cell(predicted: int, finish: str | None) -> str:
+    if finish is None:
+        return "<td class='num res'>—</td>"
+    cls = "num res"
+    if finish == str(predicted):
+        cls += " hit"
+    elif finish.isdigit() and int(finish) <= 3 < predicted:
+        cls += " risk"
+    return f"<td class='{cls}'>{html.escape(finish)}</td>"
+
+
+def _table(pred: pd.DataFrame, result: pd.Series | None = None) -> str:
+    res_head = "<th>Result</th>" if result is not None else ""
     head = ("<thead><tr><th></th><th></th><th class='left'>Driver</th><th class='left team'>Team</th>"
-            "<th>Grid</th><th>Win</th><th>Podium</th><th>Points</th><th>DNF</th></tr></thead>")
+            f"<th>Grid</th>{res_head}<th>Win</th><th>Podium</th><th>Points</th><th>DNF</th></tr></thead>")
     rows = []
     for row in pred.itertuples(index=False):
+        res = "" if result is None else _result_cell(int(row.PredictedPosition), result.get(row.Abbreviation))
         dnf = 0.0 if pd.isna(row.DnfPct) else float(row.DnfPct)
         risk = " class='num risk'" if dnf >= 20 else " class='num'"
         rows.append(
@@ -296,7 +316,7 @@ def _table(pred: pd.DataFrame) -> str:
             f"<td class='mark-cell'><span class='mark' style='{_team_style(row.TeamName)}'></span></td>"
             f"<td class='drv'>{_cell(row.Abbreviation)}</td>"
             f"<td class='team'>{_cell(row.TeamName)}</td>"
-            f"<td class='num'>{_grid_label(row.Grid)}{_move(row.Grid, row.PredictedPosition)}</td>"
+            f"<td class='num'>{_grid_label(row.Grid)}{_move(row.Grid, row.PredictedPosition)}</td>{res}"
             f"<td class='num win'>{_pct(row.WinPct)}</td><td class='num'>{_pct(row.PodiumPct)}</td>"
             f"<td class='num'>{_pct(row.PointsPct)}</td><td{risk}>{_pct(row.DnfPct)}</td></tr>"
         )
@@ -321,7 +341,7 @@ def _footer(pred: pd.DataFrame, stamp: pd.Timestamp) -> str:
     return f"<hr class='rule'><footer>{''.join(lines)}</footer>"
 
 
-def render(csv_path: Path) -> str:
+def render(csv_path: Path, result: pd.Series | None = None, nav: str = "") -> str:
     pred = pd.read_csv(csv_path).sort_values("PredictedPosition")
     season, rnd = _season_round(Path(csv_path))
     event = str(pred["EventName"].iloc[0]) if "EventName" in pred else f"Round {rnd}"
@@ -330,6 +350,9 @@ def render(csv_path: Path) -> str:
 
     favourite = pred.sort_values("WinPct", ascending=False).iloc[0]
     podium = pred.sort_values("PodiumPct", ascending=False)["Abbreviation"].head(3)
+    won = ""
+    if result is not None and (result == "1").any():
+        won = f" · Won by <b>{html.escape(str(result[result == '1'].index[0]))}</b>"
     tag = ('<span class="tag"><i></i>Predicted before the race</span>' if pre_race
            else '<span class="tag after"><i></i>Made after the race — not a forecast</span>')
     when = ""
@@ -341,6 +364,7 @@ def render(csv_path: Path) -> str:
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>{STYLE}</style>
 <div class="wrap">
+  {nav}
   <header>
     <p class="meta"><span class="rnd num">Round {rnd}</span><span>{season} season</span></p>
     <h1>{html.escape(event)}</h1>
@@ -352,7 +376,7 @@ def render(csv_path: Path) -> str:
   <div class="headline">
     <span class="code">{_cell(favourite['Abbreviation'])}</span>
     <span class="pct num">{_pct(favourite['WinPct'])}% to win</span>
-    <span class="sub">Most likely podium: <b>{html.escape(", ".join(podium))}</b></span>
+    <span class="sub">Most likely podium: <b>{html.escape(", ".join(podium))}</b>{won}</span>
   </div>
 
   <hr class="rule">
@@ -362,7 +386,7 @@ def render(csv_path: Path) -> str:
 
   <hr class="rule">
   <h2>Full field</h2>
-  {_table(pred)}
+  {_table(pred, result)}
 
   <hr class="rule">
   <h2>How to read this</h2>

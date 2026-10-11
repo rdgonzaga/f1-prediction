@@ -5,6 +5,8 @@ import pandas as pd
 
 from f1pred import build, config, evaluate, fetch
 
+NON_FINISH_LABELS = {"R": "DNF", "D": "DSQ", "W": "DNS"}
+
 
 def load_predictions(season: int | None = None) -> list[tuple[int, int, pd.DataFrame]]:
     out = []
@@ -15,9 +17,22 @@ def load_predictions(season: int | None = None) -> list[tuple[int, int, pd.DataF
     return out
 
 
+def has_full_result(actual: pd.DataFrame) -> bool:
+    return not actual.empty and not actual["Classified"].astype("string").fillna("").eq("").all()
+
+
+def race_result(actual: pd.DataFrame) -> pd.Series | None:
+    """Finish label per driver ("1".."22", or "DNF"), or None until the full result is in."""
+    if not has_full_result(actual):
+        return None
+    classified = actual["Classified"].astype("string").fillna("")
+    labels = classified.where(classified.str.isdigit(), classified.map(NON_FINISH_LABELS).fillna("DNF"))
+    return pd.Series(labels.to_numpy(), index=actual["Abbreviation"].to_numpy())
+
+
 def merge_actual(pred: pd.DataFrame, actual: pd.DataFrame) -> pd.DataFrame | None:
     """Prediction rows joined to the result, or None while the result is missing or partial."""
-    if actual.empty or actual["Classified"].astype("string").fillna("").eq("").all():
+    if not has_full_result(actual):
         return None
     merged = pred.merge(actual[["Abbreviation", "FinishPosition", "Classified"]], on="Abbreviation", how="inner")
     merged = merged[merged["FinishPosition"].notna() & merged["Classified"].astype("string").ne("W")]

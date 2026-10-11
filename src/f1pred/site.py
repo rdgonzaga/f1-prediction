@@ -130,6 +130,10 @@ def render_index(sections: list[tuple[int, list[dict], bool]]) -> str:
 """
 
 
+def _write(path: Path, fragment: str) -> None:
+    path.write_text(report.standalone(fragment), encoding="utf-8", newline="\n")
+
+
 def build_site(out_dir: Path | None = None) -> Path:
     out_dir = Path(out_dir or config.SITE_DIR)
     predictions = score.load_predictions()
@@ -147,16 +151,15 @@ def build_site(out_dir: Path | None = None) -> Path:
             has_scorecard = False
         else:
             nav = f'<nav class="nav">{_link("../index.html", "← All races")}</nav>'
-            (season_dir / "scorecard.html").write_text(
-                report.standalone(season.render(season_no, races, drivers, nav=nav)), encoding="utf-8")
+            _write(season_dir / "scorecard.html", season.render(season_no, races, drivers, nav=nav))
             has_scorecard = True
         rounds = sorted(r for s, r, _ in predictions if s == season_no)
         for rnd in rounds:
             actual = entries[(entries["Season"] == season_no) & (entries["RoundNumber"] == rnd)]
             page = report.render(config.prediction_path(season_no, rnd, ".csv"),
                                  result=score.race_result(actual), nav=race_nav(rounds, rnd, has_scorecard))
-            (season_dir / page_name(rnd)).write_text(report.standalone(page), encoding="utf-8")
+            _write(season_dir / page_name(rnd), page)
         sections.append((season_no, index_rows(season_no, predictions, entries), has_scorecard))
-    (out_dir / "index.html").write_text(report.standalone(render_index(sections)), encoding="utf-8")
+    _write(out_dir / "index.html", render_index(sections))
     print(f"Wrote the site to {out_dir} ({len(predictions)} race pages). Open index.html to check it.")
     return out_dir

@@ -98,6 +98,18 @@ def sessions_missing_messages() -> set[str]:
     return keys
 
 
+def sessions_missing_results() -> set[str]:
+    """Races and sprints saved before full results were out (GridPosition all null)."""
+    keys = set()
+    for code in ("R", "S"):
+        for path in config.RAW_DIR.glob(f"*/R*_{code}_results.parquet"):
+            grid = pd.read_parquet(path, columns=["GridPosition"])["GridPosition"]
+            if len(grid) and grid.isna().all():
+                rnd = path.stem.split("_")[0]
+                keys.add(session_key(int(path.parent.name), int(rnd[1:]), code))
+    return keys
+
+
 def extract_session(job) -> dict[str, pd.DataFrame]:
     session = fastf1.get_session(int(job.Season), int(job.RoundNumber), job.SessionName)
     session.load(laps=True, telemetry=False, weather=True, messages=True)
@@ -165,7 +177,7 @@ def run(seasons: list[int], max_events: int | None = None, rounds: list[int] | N
     done = set(log_df.loc[log_df["Status"] == "DONE", "SessionKey"])
     if not retry_errors:
         done |= set(log_df.loc[log_df["Status"] == "ERROR", "SessionKey"])
-    refetch = done & sessions_missing_messages()
+    refetch = done & (sessions_missing_messages() | sessions_missing_results())
     done -= refetch
     todo = queue[~queue["SessionKey"].isin(done)]
     print(f"Sessions in scope: {len(queue)} | done: {len(queue) - len(todo)} | "

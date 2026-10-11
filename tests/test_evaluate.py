@@ -26,3 +26,10 @@ def test_compare_feature_sets():
     table = evaluate.compare(feats, season=2026, start_round=3, set_names=["grid", "all"])
     assert list(table.columns) == ["grid", "all", "GridBaseline"]
     assert list(table.index) == ["Spearman", "WinnerHit", "PodiumHitRate", "MAE"]
+
+
+def test_backtest_skips_races_without_a_grid():
+    feats = build_features(*make_data())
+    feats.loc[(feats["Season"] == 2026) & (feats["RoundNumber"] == 3), "GridPosition"] = None
+    results = evaluate.backtest(feats, season=2026, start_round=2)
+    assert list(results["RoundNumber"]) == [2, 4]

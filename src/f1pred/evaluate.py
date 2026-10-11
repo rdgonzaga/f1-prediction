@@ -27,7 +27,8 @@ def race_metrics(actual: pd.Series, predicted: pd.Series) -> dict[str, float]:
 
 def season_race_indices(feats: pd.DataFrame, season: int, start_round: int) -> list[int]:
     done = feats[(feats["Season"] == season) & feats["FinishPosition"].notna() & (feats["RoundNumber"] >= start_round)]
-    return [int(i) for i in sorted(done["RaceIdx"].unique())]
+    has_grid = done.groupby("RaceIdx")["GridPosition"].transform(lambda s: s.notna().any())
+    return [int(i) for i in sorted(done.loc[has_grid, "RaceIdx"].unique())]
 
 
 def walk_forward(feats: pd.DataFrame, race_indices: list[int], features: list[str] = FEATURES) -> Iterator[pd.DataFrame]:

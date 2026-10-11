@@ -16,6 +16,8 @@ def load_predictions(season: int | None = None) -> list[tuple[int, int, pd.DataF
 
 
 def score_race(pred: pd.DataFrame, actual: pd.DataFrame) -> dict[str, float] | None:
+    if actual["Classified"].astype("string").fillna("").eq("").all():
+        return None
     merged = pred.merge(actual[["Abbreviation", "FinishPosition", "Classified"]], on="Abbreviation", how="inner")
     merged = merged[merged["FinishPosition"].notna() & merged["Classified"].astype("string").ne("W")]
     if merged.empty:
@@ -52,7 +54,7 @@ def run(season: int | None = None, refresh: bool = False, include_backfilled: bo
         actual = entries[(entries["Season"] == s) & (entries["RoundNumber"] == rnd)]
         row = score_race(pred, actual) if not actual.empty else None
         if row is None:
-            skipped.append(f"{label}: no race result yet")
+            skipped.append(f"{label}: no full race result yet")
             continue
         rows.append({"Season": s, "RoundNumber": rnd, "EventName": actual["EventName"].iloc[0], **row})
 
@@ -63,7 +65,8 @@ def run(season: int | None = None, refresh: bool = False, include_backfilled: bo
         return pd.DataFrame()
 
     card = pd.DataFrame(rows)
-    card.to_csv(config.PREDICTIONS_DIR / "scorecard.csv", index=False)
+    if not include_backfilled:
+        card.to_csv(config.PREDICTIONS_DIR / "scorecard.csv", index=False)
     print(card.round(3).to_string(index=False))
     print(f"\n{len(card)} race(s) scored")
     print(evaluate.summarize(card).to_string())

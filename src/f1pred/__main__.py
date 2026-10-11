@@ -46,6 +46,9 @@ def main() -> None:
     p_report.add_argument("season", type=int)
     p_report.add_argument("round", type=int)
 
+    p_season = sub.add_parser("season", help="Build a season scorecard page from every scored prediction")
+    p_season.add_argument("season", type=int)
+
     p_score = sub.add_parser("score", help="Score saved predictions against race results")
     p_score.add_argument("--season", type=int)
     p_score.add_argument("--refresh", action="store_true", help="Fetch results for predicted races first")
@@ -64,6 +67,10 @@ def main() -> None:
     if args.command == "report":
         from f1pred import report
         report.run(args.season, args.round)
+
+    if args.command == "season":
+        from f1pred import season
+        season.run(args.season)
 
     if args.command == "backtest":
         from f1pred import build, evaluate

@@ -31,6 +31,7 @@ SEASON_STYLE = """
 .cal rect.said { fill: var(--ink-3); fill-opacity: .45; }
 .cal rect.did { fill: var(--ink-2); }
 td.lbl { text-align: left; color: var(--ink-2); }
+svg.dumb, svg.cal { max-width: 680px; }
 th.grp { text-align: center; color: var(--ink-2); }
 thead tr:first-child th:first-child { border-bottom: 0; }
 td.better { font-weight: 600; color: var(--ink); }
@@ -91,7 +92,7 @@ def _summary(races: pd.DataFrame) -> str:
 
 
 def _dumbbell(races: pd.DataFrame) -> str:
-    width, row_h, pad_l, pad_r, head = 640, 26, 150, 44, 26
+    width, row_h, pad_l, pad_r, head = 480, 28, 122, 40, 26
     plot = width - pad_l - pad_r
     lo = min(0.0, float(races[["Spearman", "GridSpearman"]].min().min()))
     height = head + row_h * len(races)
@@ -105,7 +106,7 @@ def _dumbbell(races: pd.DataFrame) -> str:
         v = lo + (1 - lo) * step / 4
         parts.append(f'<line x1="{x(v):.1f}" y1="{head - 7}" x2="{x(v):.1f}" y2="{height - 4}" '
                      f'stroke="var(--rule)" stroke-width="1" />')
-        parts.append(f'<text x="{x(v):.1f}" y="{head - 13}" fill="var(--ink-3)" font-size="11" '
+        parts.append(f'<text x="{x(v):.1f}" y="{head - 13}" fill="var(--ink-3)" font-size="12" '
                      f'font-family="IBM Plex Mono, monospace" text-anchor="middle">{v:.2f}</text>')
     for i, r in enumerate(races.itertuples(index=False)):
         y = head + i * row_h + 11
@@ -123,7 +124,7 @@ def _dumbbell(races: pd.DataFrame) -> str:
         parts.append(f'<circle class="grid" cx="{x(r.GridSpearman):.1f}" cy="{y}" r="5" />')
         parts.append(f'<circle class="model" cx="{x(r.Spearman):.1f}" cy="{y}" r="5" />')
         if r.Live:
-            parts.append(f'<text x="{width - 4}" y="{y + 4}" fill="var(--signal)" font-size="11" font-weight="600" '
+            parts.append(f'<text x="{width - 4}" y="{y + 4}" fill="var(--signal)" font-size="12" font-weight="600" '
                          f'text-anchor="end" font-family="IBM Plex Mono, monospace">LIVE</text>')
         parts.append("</g>")
     parts.append("</svg>")
@@ -131,7 +132,7 @@ def _dumbbell(races: pd.DataFrame) -> str:
 
 
 def _calibration(cal: pd.DataFrame) -> str:
-    width, row_h, pad_l, pad_r, head = 640, 40, 78, 60, 26
+    width, row_h, pad_l, pad_r, head = 480, 40, 70, 52, 26
     plot = width - pad_l - pad_r
     height = head + row_h * len(cal)
     parts = [f'<svg class="cal" viewBox="0 0 {width} {height}" role="img" '
@@ -141,7 +142,7 @@ def _calibration(cal: pd.DataFrame) -> str:
         xv = pad_l + plot * v / 100
         parts.append(f'<line x1="{xv:.1f}" y1="{head - 7}" x2="{xv:.1f}" y2="{height - 4}" '
                      f'stroke="var(--rule)" stroke-width="1" />')
-        parts.append(f'<text x="{xv:.1f}" y="{head - 13}" fill="var(--ink-3)" font-size="11" '
+        parts.append(f'<text x="{xv:.1f}" y="{head - 13}" fill="var(--ink-3)" font-size="12" '
                      f'font-family="IBM Plex Mono, monospace" text-anchor="middle">{v}</text>')
     for i, (band, r) in enumerate(cal.iterrows()):
         y = head + i * row_h

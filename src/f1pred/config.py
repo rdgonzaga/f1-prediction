@@ -42,7 +42,7 @@ LOCATION_ALIASES = {
 }
 
 # Events confirmed to have moved to a different track (not just renamed).
-DIFFERENT_VENUES = {"Spanish Grand Prix"}
+DIFFERENT_VENUES = {"Spanish Grand Prix", "Bahrain Grand Prix"}
 
 MAX_RETRIES = 3
 RETRY_SLEEP_SECONDS = 2

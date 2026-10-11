@@ -49,6 +49,8 @@ def main() -> None:
     p_season = sub.add_parser("season", help="Build a season scorecard page from every scored prediction")
     p_season.add_argument("season", type=int)
 
+    sub.add_parser("site", help="Build the static website from every saved prediction into site/")
+
     p_score = sub.add_parser("score", help="Score saved predictions against race results")
     p_score.add_argument("--season", type=int)
     p_score.add_argument("--refresh", action="store_true", help="Fetch results for predicted races first")
@@ -71,6 +73,10 @@ def main() -> None:
     if args.command == "season":
         from f1pred import season
         season.run(args.season)
+
+    if args.command == "site":
+        from f1pred import site
+        site.build_site()
 
     if args.command == "backtest":
         from f1pred import build, evaluate

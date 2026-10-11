@@ -73,6 +73,19 @@ they qualified.
 **Run it before the race starts.** Once the result exists, `predict` refuses, since a prediction made
 in hindsight doesn't count when you score it. `--backfill` saves one anyway.
 
+## The website
+
+Every prediction is up at https://rdgonzaga.github.io/f1-prediction/, with the actual result next to
+it once the race is done. To update it after a race:
+
+```
+python -m f1pred score --refresh
+python -m f1pred site
+```
+
+Then commit `site/` and push. GitHub deploys it about a minute later. The predictions themselves are
+still made on your machine, since they need the downloaded timing data and any penalties you entered.
+
 ## The other commands
 
 `fetch` on its own downloads every season from 2022 to now. It's resumable, skips what it already

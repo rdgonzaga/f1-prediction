@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>F1 Race Predictions</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #f4f3ef;
+  --panel: #fbfaf7;
+  --ink: #16160f;
+  --ink-2: #4c4b44;
+  --ink-3: #85837a;
+  --rule: #ddd9cf;
+  --rule-strong: #bdb8aa;
+  --signal: #b4341f;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0d10;
+    --panel: #12151a;
+    --ink: #eef1f4;
+    --ink-2: #a8b0b8;
+    --ink-3: #6f7880;
+    --rule: #222831;
+    --rule-strong: #39424e;
+    --signal: #ff5c3d;
+    color-scheme: dark;
+  }
+  :root:not([data-theme="light"]) .mark,
+  :root:not([data-theme="light"]) .bar { background: var(--team-d); }
+  :root:not([data-theme="light"]) rect.bar { fill: var(--team-d); background: none; }
+  :root:not([data-theme="light"]) rect.bar-soft { fill: var(--team-d); }
+  :root:not([data-theme="light"]) text.on-bar { fill: var(--on-d); }
+}
+:root[data-theme="dark"] {
+  --bg: #0b0d10;
+  --panel: #12151a;
+  --ink: #eef1f4;
+  --ink-2: #a8b0b8;
+  --ink-3: #6f7880;
+  --rule: #222831;
+  --rule-strong: #39424e;
+  --signal: #ff5c3d;
+  color-scheme: dark;
+}
+:root[data-theme="dark"] .mark,
+:root[data-theme="dark"] .bar { background: var(--team-d); }
+:root[data-theme="dark"] rect.bar { fill: var(--team-d); background: none; }
+:root[data-theme="dark"] rect.bar-soft { fill: var(--team-d); }
+:root[data-theme="dark"] text.on-bar { fill: var(--on-d); }
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding-block: 28px 64px;
+  padding-left: 16px;
+  padding-right: 16px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Barlow", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.wrap { max-width: 880px; margin: 0 auto; }
+.num { font-family: "IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace; font-variant-numeric: tabular-nums; }
+.cond { font-family: "Barlow Condensed", "Barlow", ui-sans-serif, sans-serif; }
+
+.meta { display: flex; gap: 10px; align-items: baseline; color: var(--ink-3); font-size: 14px; }
+.meta .rnd { color: var(--ink-2); font-weight: 600; }
+h1 {
+  font-family: "Barlow Condensed", "Barlow", ui-sans-serif, sans-serif;
+  font-size: clamp(38px, 9vw, 62px); font-weight: 700; letter-spacing: -.01em; line-height: .96;
+  margin: 4px 0 0; text-transform: uppercase; text-wrap: balance;
+}
+.stamp { color: var(--ink-3); font-size: 13px; margin: 10px 0 0; }
+.tag {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 14px;
+  border: 1px solid var(--rule-strong); border-radius: 2px; padding: 4px 10px;
+  font-size: 13px; font-weight: 600; color: var(--ink-2);
+}
+.tag i { width: 8px; height: 8px; background: var(--signal); display: block; }
+.tag.after { color: var(--signal); border-color: var(--signal); }
+
+.rule { border: 0; border-top: 1px solid var(--rule); margin: 26px 0 0; }
+.rule.heavy { border-top: 2px solid var(--ink); }
+h2 {
+  font-family: "Barlow Condensed", "Barlow", ui-sans-serif, sans-serif;
+  font-size: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: .01em;
+  color: var(--ink-2); margin: 18px 0 12px;
+}
+
+.headline { display: flex; flex-wrap: wrap; align-items: last baseline; gap: 6px 18px; margin-top: 18px; }
+.headline .code {
+  font-family: "Barlow Condensed", "Barlow", ui-sans-serif, sans-serif;
+  font-size: clamp(52px, 14vw, 92px); font-weight: 700; line-height: .86; letter-spacing: -.02em;
+}
+.headline .pct { font-size: clamp(22px, 5vw, 30px); font-weight: 500; color: var(--ink-2); }
+.headline .sub { flex-basis: 100%; color: var(--ink-3); font-size: 15px; margin-top: 4px; }
+.headline .sub b { color: var(--ink-2); font-weight: 600; }
+
+.legend { display: flex; gap: 16px; font-size: 13px; color: var(--ink-3); margin: 0 0 10px; }
+.legend i { display: inline-block; width: 22px; height: 9px; vertical-align: middle; margin-right: 6px;
+  background: var(--ink-3); }
+.legend i.soft { opacity: .3; }
+svg { width: 100%; height: auto; display: block; }
+rect.bar { fill: var(--team-l); }
+rect.bar-soft { fill: var(--team-l); fill-opacity: .28; }
+text.on-bar { fill: var(--on-l); }
+
+.scroller { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+thead th {
+  font-family: "Barlow Condensed", "Barlow", ui-sans-serif, sans-serif;
+  font-size: 14px; font-weight: 600; text-transform: uppercase; color: var(--ink-3);
+  text-align: right; padding: 0 8px 6px; white-space: nowrap; border-bottom: 1px solid var(--rule-strong);
+}
+thead th.left { text-align: left; }
+tbody tr { border-bottom: 1px solid var(--rule); transition: background 160ms ease; }
+tbody tr:hover { background: var(--panel); }
+td { padding: 6px 8px; text-align: right; white-space: nowrap; }
+td.pos { color: var(--ink-3); text-align: right; width: 30px; padding-right: 2px; }
+td.mark-cell { width: 4px; padding: 0 0 0 6px; }
+.mark { display: block; width: 4px; height: 20px; background: var(--team-l); }
+td.drv {
+  font-family: "Barlow Condensed", "Barlow", ui-sans-serif, sans-serif;
+  font-size: 19px; font-weight: 600; text-align: left; padding-left: 8px;
+}
+td.team { text-align: left; color: var(--ink-3); font-size: 14px; }
+td.win { font-weight: 600; }
+.move { color: var(--ink-3); font-size: 13px; margin-left: 4px; }
+.move.up { color: var(--ink-2); font-weight: 600; }
+.risk { color: var(--signal); font-weight: 600; }
+td.res { color: var(--ink-2); }
+td.res.hit { color: var(--ink); font-weight: 600; }
+td.res.risk { color: var(--signal); }
+.nav { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; margin: 0 0 22px; }
+.nav a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--rule-strong); }
+.nav a:hover { color: var(--ink); border-color: var(--ink); }
+.nav .spacer { flex: 1; }
+
+.note { margin-top: 14px; max-width: 62ch; }
+.note p { margin: 0 0 12px; color: var(--ink-2); font-size: 15px; }
+.note p:last-child { margin-bottom: 0; }
+.note strong { color: var(--ink); }
+footer { margin-top: 26px; color: var(--ink-3); font-size: 13px; }
+footer p { margin: 0 0 5px; }
+footer .warn { color: var(--signal); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@media (max-width: 460px) {
+  td.team, thead th.team { display: none; }
+}
+
+td.race { text-align: left; }
+td.race a { color: var(--ink); text-decoration: none; font-weight: 600; }
+td.race a:hover { border-bottom: 1px solid var(--ink); }
+td.pick { text-align: left; }
+.live { color: var(--signal); font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600;
+  margin-left: 6px; }
+td.ok { color: var(--ink); font-weight: 600; }
+td.miss { color: var(--ink-3); }
+.lede { color: var(--ink-2); max-width: 62ch; margin: 14px 0 0; }
+.lede a, .cta a, footer a { color: var(--ink-2); }
+.cta { margin: 18px 0 0; font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="meta"><span class="rnd">f1-prediction</span></p>
+    <h1>F1 race predictions</h1>
+    <p class="lede">Each race is predicted once qualifying is done: the likely finishing order, and every
+    driver's chance to win, reach the podium, score points or retire. Races marked
+    <span class="live">LIVE</span> were real forecasts, made before the race. The rest were made afterwards, using only the races
+    before them.</p>
+  </header>
+  
+  <hr class="rule heavy">
+  <div class="headline">
+    <span class="code num">12/16</span>
+    <span class="pct">winners picked in 2026</span>
+    <span class="sub">The favourite is the driver given the highest chance to win.</span>
+  </div>
+  <p class='cta'><a href="2026/scorecard.html">Season scorecard →</a> How the model did against plain grid order, and whether its percentages held up.</p>
+  <hr class="rule">
+  <h2>2026 races</h2>
+  <div class='scroller'><table><thead><tr><th></th><th class='left'>Race</th><th class='left'>Favourite</th><th class='left'>Winner</th><th></th></tr></thead><tbody><tr><td class='pos num'>1</td><td class='race'><a href="2026/round-01.html">Australian</a></td><td class='pick'><b>RUS</b> <span class='move num'>72%</span></td><td class='pick'>RUS</td><td class='ok'>✓</td></tr><tr><td class='pos num'>2</td><td class='race'><a href="2026/round-02.html">Chinese</a></td><td class='pick'><b>ANT</b> <span class='move num'>44%</span></td><td class='pick'>ANT</td><td class='ok'>✓</td></tr><tr><td class='pos num'>3</td><td class='race'><a href="2026/round-03.html">Japanese</a></td><td class='pick'><b>ANT</b> <span class='move num'>57%</span></td><td class='pick'>ANT</td><td class='ok'>✓</td></tr><tr><td class='pos num'>4</td><td class='race'><a href="2026/round-04.html">Miami</a></td><td class='pick'><b>ANT</b> <span class='move num'>65%</span></td><td class='pick'>ANT</td><td class='ok'>✓</td></tr><tr><td class='pos num'>5</td><td class='race'><a href="2026/round-05.html">Canadian</a></td><td class='pick'><b>RUS</b> <span class='move num'>64%</span></td><td class='pick'>ANT</td><td class='miss'>✗</td></tr><tr><td class='pos num'>6</td><td class='race'><a href="2026/round-06.html">Monaco</a></td><td class='pick'><b>ANT</b> <span class='move num'>44%</span></td><td class='pick'>ANT</td><td class='ok'>✓</td></tr><tr><td class='pos num'>7</td><td class='race'><a href="2026/round-07.html">Barcelona</a></td><td class='pick'><b>HAM</b> <span class='move num'>37%</span></td><td class='pick'>HAM</td><td class='ok'>✓</td></tr><tr><td class='pos num'>8</td><td class='race'><a href="2026/round-08.html">Austrian</a></td><td class='pick'><b>RUS</b> <span class='move num'>62%</span></td><td class='pick'>RUS</td><td class='ok'>✓</td></tr><tr><td class='pos num'>9</td><td class='race'><a href="2026/round-09.html">British</a></td><td class='pick'><b>ANT</b> <span class='move num'>73%</span></td><td class='pick'>LEC</td><td class='miss'>✗</td></tr><tr><td class='pos num'>10</td><td class='race'><a href="2026/round-10.html">Belgian</a></td><td class='pick'><b>ANT</b> <span class='move num'>23%</span></td><td class='pick'>ANT</td><td class='ok'>✓</td></tr><tr><td class='pos num'>11</td><td class='race'><a href="2026/round-11.html">Hungarian</a></td><td class='pick'><b>NOR</b> <span class='move num'>49%</span></td><td class='pick'>NOR</td><td class='ok'>✓</td></tr><tr><td class='pos num'>12</td><td class='race'><a href="2026/round-12.html">Dutch</a></td><td class='pick'><b>NOR</b> <span class='move num'>54%</span></td><td class='pick'>NOR</td><td class='ok'>✓</td></tr><tr><td class='pos num'>13</td><td class='race'><a href="2026/round-13.html">Italian</a></td><td class='pick'><b>RUS</b> <span class='move num'>31%</span></td><td class='pick'>ANT</td><td class='miss'>✗</td></tr><tr><td class='pos num'>14</td><td class='race'><a href="2026/round-14.html">Spanish</a></td><td class='pick'><b>NOR</b> <span class='move num'>32%</span></td><td class='pick'>ANT</td><td class='miss'>✗</td></tr><tr><td class='pos num'>15</td><td class='race'><a href="2026/round-15.html">Azerbaijan</a> <span class='live'>LIVE</span></td><td class='pick'><b>RUS</b> <span class='move num'>78%</span></td><td class='pick'>RUS</td><td class='ok'>✓</td></tr><tr><td class='pos num'>16</td><td class='race'><a href="2026/round-16.html">Bahrain</a> <span class='live'>LIVE</span></td><td class='pick'><b>VER</b> <span class='move num'>42%</span></td><td class='pick'>VER</td><td class='ok'>✓</td></tr><tr><td class='pos num'>17</td><td class='race'><a href="2026/round-17.html">Singapore</a> <span class='live'>LIVE</span></td><td class='pick'><b>VER</b> <span class='move num'>33%</span></td><td class='pick miss'>pending</td><td></td></tr></tbody></table></div>
+  <hr class="rule">
+  <footer><p>Built from FastF1 timing data. Code and method on
+  <a href="https://github.com/rdgonzaga/f1-prediction">GitHub</a>.</p></footer>
+</div>
+</body>
+</html>

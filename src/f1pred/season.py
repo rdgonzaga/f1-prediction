@@ -159,7 +159,7 @@ def _calibration(cal: pd.DataFrame) -> str:
     return "".join(parts)
 
 
-def render(season: int, races: pd.DataFrame, drivers: pd.DataFrame) -> str:
+def render(season: int, races: pd.DataFrame, drivers: pd.DataFrame, nav: str = "") -> str:
     beat = int((races["Spearman"] > races["GridSpearman"]).sum())
     live = races[races["Live"]]
     live_line = (f"Live, before the race: <b>{int((live['Spearman'] > live['GridSpearman']).sum())} of "
@@ -168,6 +168,7 @@ def render(season: int, races: pd.DataFrame, drivers: pd.DataFrame) -> str:
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>{STYLE}{SEASON_STYLE}</style>
 <div class="wrap">
+  {nav}
   <header>
     <p class="meta"><span class="rnd num">{len(races)} races</span><span>{season} season</span></p>
     <h1>Season scorecard</h1>

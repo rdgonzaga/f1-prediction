@@ -15,12 +15,18 @@ def load_predictions(season: int | None = None) -> list[tuple[int, int, pd.DataF
     return out
 
 
-def score_race(pred: pd.DataFrame, actual: pd.DataFrame) -> dict[str, float] | None:
-    if actual["Classified"].astype("string").fillna("").eq("").all():
+def merge_actual(pred: pd.DataFrame, actual: pd.DataFrame) -> pd.DataFrame | None:
+    """Prediction rows joined to the result, or None while the result is missing or partial."""
+    if actual.empty or actual["Classified"].astype("string").fillna("").eq("").all():
         return None
     merged = pred.merge(actual[["Abbreviation", "FinishPosition", "Classified"]], on="Abbreviation", how="inner")
     merged = merged[merged["FinishPosition"].notna() & merged["Classified"].astype("string").ne("W")]
-    if merged.empty:
+    return None if merged.empty else merged
+
+
+def score_race(pred: pd.DataFrame, actual: pd.DataFrame) -> dict[str, float] | None:
+    merged = merge_actual(pred, actual)
+    if merged is None:
         return None
     actual_rank = merged["FinishPosition"].rank(method="first")
     row = evaluate.race_metrics(merged["FinishPosition"], merged["PredictedPosition"])
@@ -52,7 +58,7 @@ def run(season: int | None = None, refresh: bool = False, include_backfilled: bo
             skipped.append(f"{label}: made after the race (use --include-backfilled)")
             continue
         actual = entries[(entries["Season"] == s) & (entries["RoundNumber"] == rnd)]
-        row = score_race(pred, actual) if not actual.empty else None
+        row = score_race(pred, actual)
         if row is None:
             skipped.append(f"{label}: no full race result yet")
             continue

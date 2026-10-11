@@ -84,6 +84,10 @@ only honest way to tell whether a change helped. Add `--probabilities` to score 
 too, and judge changes on those (winner log loss, podium and points Brier) over the full 2024 and
 2025 seasons. Beating grid order by a hair on 2026 alone is noise.
 
+`season 2026` builds one page for the whole season: model against grid order race by race, and
+whether the podium percentages came true about as often as they said. Live predictions are marked;
+the rest were made after the race, using only the races before them.
+
 ## How it works
 
 Practice, qualifying, sprint and race sessions from 2022 on. Telemetry is never loaded, since it was

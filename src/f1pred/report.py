@@ -217,7 +217,7 @@ def team_colors(team: str) -> tuple[str, str]:
     return _hex(light), _hex(dark)
 
 
-def _on_color(value: str) -> str:
+def on_color(value: str) -> str:
     """Ink that stays readable on top of a team colour."""
     return "#10131a" if _luma(_rgb(value)) > 0.55 else "#ffffff"
 
@@ -225,7 +225,7 @@ def _on_color(value: str) -> str:
 def _team_style(team) -> str:
     light, dark = team_colors("" if pd.isna(team) else str(team))
     return (f"--team-l:{light};--team-d:{dark};"
-            f"--on-l:{_on_color(light)};--on-d:{_on_color(dark)}")
+            f"--on-l:{on_color(light)};--on-d:{on_color(dark)}")
 
 
 def _cell(value) -> str:

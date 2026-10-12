@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_hero.html" import podium, verdict %}
+{% from "_tower.html" import tower, field_table %}
+{% block title %}{{ race.name }} {{ race.season }}{% endblock %}
+{% block content %}
+<header class="race-head">
+  <p class="eyebrow"><span>Round {{ race.rnd }} · {{ race.season }} season</span></p>
+  <h1>{{ race.name }}</h1>
+  <p class="race-meta">
+    {% if race.live %}<span class="badge-live">LIVE</span><span>Predicted before the race</span>
+    {% else %}<span class="badge-after">Made after the race</span>{% endif %}
+    {% if race.made %}<span class="made">{{ race.made }}</span>{% endif %}
+  </p>
+</header>
+{{ podium(race) }}
+{{ verdict(race) }}
+
+<div class="tabs" role="tablist" data-tabs>
+  {% if not race.pending %}<button type="button" role="tab" aria-controls="tab-result">Result vs prediction</button>{% endif %}
+  <button type="button" role="tab" aria-controls="tab-chances">Chances</button>
+  <button type="button" role="tab" aria-controls="tab-field">Full field</button>
+</div>
+{% if not race.pending %}
+<section class="panel" id="tab-result" role="tabpanel">
+  <h2 class="section-title">Result vs prediction</h2>
+  {{ tower(race, root) }}
+</section>
+{% endif %}
+<section class="panel" id="tab-chances" role="tabpanel">
+  <h2 class="section-title">Chances</h2>
+  <p class="legend"><span><i></i>Win</span><span><i class="soft"></i>Podium</span></p>
+  {{ charts.chance_bars(race.rows[:10])|safe }}
+</section>
+<section class="panel" id="tab-field" role="tabpanel">
+  <h2 class="section-title">Full field</h2>
+  {{ field_table(race, root) }}
+</section>
+
+{% if prev_race or next_race %}
+<nav class="pager">
+  {% if prev_race %}<a href="{{ root }}{{ prev_race.path }}">‹ R{{ prev_race.rnd }} {{ prev_race.short_name }}</a>{% else %}<span></span>{% endif %}
+  {% if next_race %}<a href="{{ root }}{{ next_race.path }}">R{{ next_race.rnd }} {{ next_race.short_name }} ›</a>{% endif %}
+</nav>
+{% endif %}
+
+<section class="note">
+  <p>The predicted order sits close to the starting grid, and that is expected. This model has <strong>not</strong> been shown to beat "everyone finishes where they start". The percentages are what it adds: checked against past races, they come out about right on average.</p>
+  <p>Grid penalties are only included if they were entered by hand. They are never in the timing data this is built from.</p>
+</section>
+{% if race.notes or race.warnings %}
+<footer class="race-notes">
+  {% for note in race.notes %}<p>{{ note }}</p>{% endfor %}
+  {% for warning in race.warnings %}<p class="warn">Data check: {{ warning }}</p>{% endfor %}
+</footer>
+{% endif %}
+{% endblock %}

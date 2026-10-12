@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ season.year }} season scorecard{% endblock %}
+{% block content %}
+{% set card = season.scorecard %}
+<header>
+  <p class="eyebrow"><span>{{ season.year }} season · {{ card.races|length }} races scored</span></p>
+  <h1>Season scorecard</h1>
+</header>
+<section class="teaser">
+  <p class="teaser-head"><span class="big">{{ card.beat }}/{{ card.races|length }}</span> races where the model's order beat the grid's</p>
+  <p>{% if card.live_count %}Live, before the race: <b>{{ card.live_beat }} of {{ card.live_count }}</b> beat grid order.{% else %}No live predictions scored yet.{% endif %}</p>
+</section>
+
+<h2 class="section-title">Totals</h2>
+<div class="scroller">
+<table class="totals">
+<thead>
+<tr><th></th>{% for head in card.heads %}<th colspan="2" class="c">{{ head }}</th>{% endfor %}</tr>
+<tr><th></th>{% for head in card.heads %}<th>Model</th><th>Grid</th>{% endfor %}</tr>
+</thead>
+<tbody>
+{% for row in card.rows %}
+<tr><td class="l">{{ row.label }}</td>{% for c in row.cells %}<td class="num{% if c.better %} better{% endif %}">{{ c.model }}</td><td class="num">{{ c.grid }}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<h2 class="section-title">Race by race</h2>
+<p class="legend"><span><i class="dot-model"></i>Model</span><span><i class="dot-grid"></i>Grid order</span><span>Order match, 1 is perfect</span></p>
+{{ charts.dumbbell(card.races)|safe }}
+
+<h2 class="section-title">Do the percentages hold up?</h2>
+<p class="legend"><span><i class="said"></i>Podium chance it gave</span><span><i class="did"></i>How often it happened</span></p>
+{{ charts.calibration(card.calibration)|safe }}
+
+<section class="note">
+  <p>Races marked <strong>LIVE</strong> were predicted after qualifying, before the race. The rest were made afterwards, but each one only used races that came before it.</p>
+  <p>If the percentages are honest, the two bars in each band come out about the same length. Bands with few drivers in them bounce around, so read the small ones loosely.</p>
+</section>
+{% endblock %}

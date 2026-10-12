@@ -1,0 +1,23 @@
+{% macro podium(race) %}
+<section class="podium" aria-label="Predicted podium">
+  {% for row in race.podium %}
+  <div class="pod pod-{{ loop.index }}" style="--team: {{ row.color }}">
+    <span class="pod-pos">P{{ loop.index }}</span>
+    <span class="pod-code">{{ row.code }}</span>
+    <span class="pod-team">{{ row.team or "Unknown team" }}</span>
+    <span class="pod-win"><b>{{ row.win|pct(0) }}%</b> to win</span>
+    {% if row.finish %}
+    <span class="pod-fin">{{ row.finish_text }}</span>
+    {% endif %}
+  </div>
+  {% endfor %}
+</section>
+{% endmacro %}
+
+{% macro verdict(race) %}
+{% if race.pending %}
+<p class="verdict pending">Result pending</p>
+{% else %}
+<p class="verdict">{% for line in race.verdict.lines %}<span>{{ line }}</span>{% endfor %}</p>
+{% endif %}
+{% endmacro %}

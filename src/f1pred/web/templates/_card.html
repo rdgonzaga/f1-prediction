@@ -1,0 +1,27 @@
+{% macro race_card(race, root) %}
+<a class="card" href="{{ root }}{{ race.path }}" style="--team: {{ race.card_color }}">
+  <span class="card-top"><span>R{{ "%02d"|format(race.rnd) }}</span>{% if race.live %}<span class="badge-live">LIVE</span>{% endif %}</span>
+  <span class="card-name">{{ race.short_name }}</span>
+  <span class="card-line"><span class="lbl">Pick</span><b>{{ race.favourite.code }}</b><span class="num">{{ race.favourite.win|pct(0) }}%</span></span>
+  <span class="card-line"><span class="lbl">Winner</span>
+    {% if race.pending %}<span class="muted">pending</span>
+    {% else %}<b>{{ race.winner or "—" }}</b>{% if race.pick_hit %}<span class="hit">✓</span>{% else %}<span class="miss">✗</span>{% endif %}
+    {% endif %}
+  </span>
+</a>
+{% endmacro %}
+
+{% macro next_card(nxt) %}
+<div class="card card-next">
+  <span class="card-top"><span>R{{ "%02d"|format(nxt.rnd) }}</span><span>Next</span></span>
+  <span class="card-name">{{ nxt.short_name }}</span>
+  <span class="card-line"><span class="muted">Predicted after qualifying</span></span>
+</div>
+{% endmacro %}
+
+{% macro season_cards(season, root, with_next=True) %}
+<div class="cards">
+  {% if with_next and season.next_race %}{{ next_card(season.next_race) }}{% endif %}
+  {% for race in season.newest_first %}{{ race_card(race, root) }}{% endfor %}
+</div>
+{% endmacro %}

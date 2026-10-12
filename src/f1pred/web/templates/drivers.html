@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Drivers{% endblock %}
+{% block content %}
+<h1>Drivers</h1>
+<p class="lede">Each driver's predictions against how their races went.</p>
+<div class="teams">
+{% for team, group in site.drivers|groupby("team") %}
+  <section class="team-block" style="--team: {{ group[0].color }}">
+    <h2>{{ team or "Unknown team" }}</h2>
+    <ul class="driver-list">
+      {% for d in group %}<li><a href="{{ root }}{{ d.path }}"><b>{{ d.code }}</b>{{ d.name }}</a></li>{% endfor %}
+    </ul>
+  </section>
+{% endfor %}
+</div>
+{% endblock %}

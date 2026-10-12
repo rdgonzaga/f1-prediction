@@ -7,7 +7,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from f1pred import build, fetch, predict, report, site
+from f1pred import build, fetch, predict, report
+from f1pred.web import build as web
 
 
 def quali_ready(log_df: pd.DataFrame, season: int, rnd: int) -> bool:
@@ -32,5 +33,5 @@ def run(season: int, event: str, penalties: dict[str, int] | None = None, pitlan
     build.run()
     predict.run(season, str(rnd), refresh=False, penalties=penalties, pitlane=pitlane, slots=slots)
     page = report.run(season, rnd)
-    site.build_site()
+    web.build_site()
     return page

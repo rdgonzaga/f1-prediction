@@ -61,10 +61,11 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "score":
-        from f1pred import score, site
+        from f1pred import score
+        from f1pred.web import build as web
         card = score.run(args.season, args.refresh, args.include_backfilled)
         if not card.empty and not args.include_backfilled:
-            site.build_site()
+            web.build_site()
 
     if args.command == "build":
         from f1pred import build
@@ -79,8 +80,8 @@ def main() -> None:
         season.run(args.season)
 
     if args.command == "site":
-        from f1pred import site
-        site.build_site()
+        from f1pred.web import build as web
+        web.build_site()
 
     if args.command == "backtest":
         from f1pred import build, evaluate

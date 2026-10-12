@@ -1,11 +1,13 @@
 """Plain data for the site pages, built from saved predictions and race results."""
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 import pandas as pd
 
 from f1pred import report, score
+from f1pred import season as season_scores
 
 MANILA_OFFSET = pd.Timedelta(hours=8)
 PODIUM = {"1", "2", "3"}
@@ -185,3 +187,142 @@ def race(season: int, rnd: int, pred: pd.DataFrame, actual: pd.DataFrame,
         out.notes.append(f"Probability spread {temperature:.2f}{tail}.")
     out.warnings = [w for w in _text(first.get("Warnings")).split("; ") if w.strip()]
     return out
+
+
+SUMMARY_ROWS = [
+    ("Spearman", "Order match", "{:.2f}"),
+    ("WinnerHit", "Winner right", "{:.0%}"),
+    ("PodiumHitRate", "Podium spots right", "{:.0%}"),
+    ("MAE", "Places off, average", "{:.1f}"),
+]
+
+
+@dataclass
+class NextRace:
+    rnd: int
+    name: str
+
+    @property
+    def short_name(self) -> str:
+        return self.name.removesuffix(" Grand Prix")
+
+
+def fetch_schedule(year: int) -> pd.DataFrame:
+    import fastf1
+
+    from f1pred import fetch
+    fetch.enable_cache()
+    return fastf1.get_event_schedule(year, include_testing=False)
+
+
+def next_race(year: int, last_round: int, schedule: Callable[[int], pd.DataFrame] = fetch_schedule) -> NextRace | None:
+    """The first scheduled round after the last prediction, or None when the lookup fails."""
+    try:
+        events = schedule(year)
+        upcoming = events[events["RoundNumber"] > last_round].sort_values("RoundNumber")
+    except Exception:
+        return None
+    if upcoming.empty:
+        return None
+    return NextRace(int(upcoming["RoundNumber"].iloc[0]), str(upcoming["EventName"].iloc[0]))
+
+
+def summary(races: pd.DataFrame) -> tuple[list[str], list[dict]]:
+    groups = [("All races", races), ("Live only", races[races["Live"]])]
+    rows = []
+    for metric, label, fmt in SUMMARY_ROWS:
+        cells = []
+        for _, g in groups:
+            if g.empty:
+                cells.append({"model": "—", "grid": "—", "better": False})
+                continue
+            model, grid = g[metric].mean(), g[f"Grid{metric}"].mean()
+            better = model < grid if metric == "MAE" else model > grid
+            cells.append({"model": fmt.format(model), "grid": fmt.format(grid), "better": bool(better)})
+        rows.append({"label": label, "cells": cells})
+    rows.append({"label": "Win chance given to the winner", "cells": [
+        {"model": "—" if g.empty else f"{g['WinnerWinPct'].mean():.0f}%", "grid": "—", "better": False}
+        for _, g in groups]})
+    return [f"{name} ({len(g)})" for name, g in groups], rows
+
+
+@dataclass
+class Scorecard:
+    races: pd.DataFrame
+    calibration: pd.DataFrame
+    heads: list[str]
+    rows: list[dict]
+    beat: int
+    live_beat: int
+    live_count: int
+
+
+def scorecard(year: int) -> Scorecard | None:
+    try:
+        races, drivers_ = season_scores.season_data(year)
+    except SystemExit:
+        return None
+    heads, rows = summary(races)
+    live = races[races["Live"]]
+    return Scorecard(races, season_scores.podium_calibration(drivers_), heads, rows,
+                     beat=int((races["Spearman"] > races["GridSpearman"]).sum()),
+                     live_beat=int((live["Spearman"] > live["GridSpearman"]).sum()), live_count=len(live))
+
+
+@dataclass
+class Season:
+    year: int
+    races: list[Race]
+    next_race: NextRace | None = None
+    scorecard: Scorecard | None = None
+
+    @property
+    def newest_first(self) -> list[Race]:
+        return self.races[::-1]
+
+    @property
+    def latest(self) -> Race:
+        return self.races[-1]
+
+    @property
+    def scored(self) -> list[Race]:
+        return [r for r in self.races if not r.pending]
+
+    @property
+    def picks_right(self) -> int:
+        return sum(r.pick_hit for r in self.scored)
+
+    @property
+    def scorecard_path(self) -> str:
+        return f"{self.year}/scorecard/"
+
+
+def drivers(seasons: list[Season]) -> list:
+    return []
+
+
+@dataclass
+class Site:
+    seasons: list[Season]
+    drivers: list[Driver]
+
+    @property
+    def current(self) -> Season:
+        return self.seasons[0]
+
+    @property
+    def scorecard_season(self) -> Season | None:
+        return next((s for s in self.seasons if s.scorecard), None)
+
+
+def load(predictions: list[tuple[int, int, pd.DataFrame]], entries: pd.DataFrame,
+         schedule: Callable[[int], pd.DataFrame] = fetch_schedule) -> Site:
+    seasons = []
+    for year in sorted({s for s, _, _ in predictions}, reverse=True):
+        season_entries = entries[entries["Season"] == year]
+        ids = driver_ids(season_entries)
+        races = [race(year, rnd, pred, season_entries[season_entries["RoundNumber"] == rnd], ids)
+                 for s, rnd, pred in sorted(predictions, key=lambda p: p[1]) if s == year]
+        seasons.append(Season(year, races, scorecard=scorecard(year)))
+    seasons[0].next_race = next_race(seasons[0].year, seasons[0].latest.rnd, schedule)
+    return Site(seasons, drivers(seasons))

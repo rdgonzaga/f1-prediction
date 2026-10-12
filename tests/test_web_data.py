@@ -83,3 +83,71 @@ def test_notes_and_stamp_come_from_the_csv():
     assert race.made == "Fri 25 Sep 2026, 16:16 UTC · 00:16 Manila"
     assert race.notes == ["Grid overrides: ALO +30", "Probability spread 0.42, calibrated on 12 earlier races."]
     assert race.warnings == ["no weather", "no track status"]
+
+
+IDS = ["alpha", "bravo", "charlie", "delta"]
+
+
+@pytest.fixture
+def saved(tmp_path, monkeypatch):
+    monkeypatch.setattr(score.config, "PREDICTIONS_DIR", tmp_path)
+    for rnd, pre_race in [(1, False), (2, True), (3, True)]:
+        path = score.config.prediction_path(2026, rnd, ".csv")
+        path.parent.mkdir(parents=True)
+        pred = pred_frame(pre_race=pre_race).assign(TeamName="Ferrari")
+        if rnd == 3:
+            pred = pred.assign(TeamName=["McLaren", "Ferrari", "Ferrari", "Ferrari"])
+        if rnd > 1:
+            pred = pred.assign(DriverId=IDS)
+        pred.to_csv(path, index=False)
+    entries = pd.concat([actual_frame(rnd=1), actual_frame(rnd=2), actual_frame(rnd=3).assign(Classified="")],
+                        ignore_index=True).assign(DriverId=IDS * 3)
+    monkeypatch.setattr(score.build, "load_processed", lambda: (entries, None, None))
+    return entries
+
+
+def no_schedule(year):
+    return pd.DataFrame()
+
+
+def test_next_race_uses_the_schedule_and_survives_failures():
+    schedule = pd.DataFrame({"RoundNumber": [17, 18, 19], "EventName": [
+        "Singapore Grand Prix", "United States Grand Prix", "Mexico City Grand Prix"]})
+    nxt = data.next_race(2026, 17, lambda year: schedule)
+    assert (nxt.rnd, nxt.name, nxt.short_name) == (18, "United States Grand Prix", "United States")
+    assert data.next_race(2026, 19, lambda year: schedule) is None
+
+    def offline(year):
+        raise ConnectionError("offline")
+    assert data.next_race(2026, 17, offline) is None
+    assert data.next_race(2026, 17, no_schedule) is None
+
+
+def test_summary_marks_where_the_model_beats_the_grid():
+    races = pd.DataFrame({
+        "Live": [True, False], "Spearman": [.8, .6], "GridSpearman": [.5, .7],
+        "WinnerHit": [1.0, 0.0], "GridWinnerHit": [0.0, 0.0],
+        "PodiumHitRate": [1.0, 2 / 3], "GridPodiumHitRate": [2 / 3, 2 / 3],
+        "MAE": [1.0, 2.0], "GridMAE": [1.5, 1.5], "WinnerWinPct": [50.0, 30.0]})
+    heads, rows = data.summary(races)
+    assert heads == ["All races (2)", "Live only (1)"]
+    assert rows[0]["label"] == "Order match"
+    assert rows[0]["cells"][0] == {"model": "0.70", "grid": "0.60", "better": True}
+    assert rows[3]["cells"][0]["better"] is False
+    assert rows[-1]["cells"][1] == {"model": "50%", "grid": "—", "better": False}
+
+
+def test_load_groups_races_and_counts_picks(saved):
+    site = data.load(score.load_predictions(), saved,
+                     lambda year: pd.DataFrame({"RoundNumber": [4], "EventName": ["Next Grand Prix"]}))
+    season = site.current
+    assert season.year == 2026 and [r.rnd for r in season.races] == [1, 2, 3]
+    assert [r.rnd for r in season.newest_first] == [3, 2, 1]
+    assert [r.live for r in season.races] == [False, True, True]
+    assert season.latest.rnd == 3 and season.latest.pending
+    assert len(season.scored) == 2 and season.picks_right == 2
+    assert season.next_race.rnd == 4
+    assert season.scorecard.beat == 2 and season.scorecard.live_count == 1
+    assert site.scorecard_season is season and season.scorecard_path == "2026/scorecard/"
+    assert season.races[0].rows[0].driver_id == "alpha"
+    assert data.scorecard(2030) is None

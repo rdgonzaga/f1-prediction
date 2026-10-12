@@ -50,12 +50,28 @@ def build_site(out_dir: Path | None = None,
     if site.scorecard_season:
         env.globals["scorecard_path"] = site.scorecard_season.scorecard_path
 
-    shutil.rmtree(out_dir, ignore_errors=True)
-    shutil.copytree(STATIC_DIR, out_dir / "static")
+    staging = out_dir.with_name(out_dir.name + ".new")
+    shutil.rmtree(staging, ignore_errors=True)
+    shutil.copytree(STATIC_DIR, staging / "static")
 
     def page(rel: str, template: str, root: str, **context) -> None:
-        _write(out_dir, rel, render_page(env, template, root, site=site, **context))
+        _write(staging, rel, render_page(env, template, root, site=site, **context))
 
+    try:
+        _render_all(site, page)
+    except Exception:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+    staging.rename(out_dir)
+    count = sum(len(s.races) for s in site.seasons)
+    print(f"Wrote the site to {out_dir} ({count} race pages, {len(site.drivers)} drivers). "
+          f"Open index.html to check it.")
+    return out_dir
+
+
+def _render_all(site: data.Site, page: Callable[..., None]) -> None:
     page("", "home.html", "./", active="home")
     page("races", "races.html", "../", active="races")
     page("drivers", "drivers.html", "../", active="drivers")
@@ -69,13 +85,9 @@ def build_site(out_dir: Path | None = None,
             page(season.scorecard_path, "scorecard.html", "../../", active="scorecard", season=season)
     for driver in site.drivers:
         page(driver.path, "driver.html", "../../", active="drivers", driver=driver)
-    count = sum(len(s.races) for s in site.seasons)
-    print(f"Wrote the site to {out_dir} ({count} race pages, {len(site.drivers)} drivers). "
-          f"Open index.html to check it.")
-    return out_dir
 
 
-def _standalone(template: str, scorecard_path: str, **context) -> str:
+def _standalone(template: str, scorecard_path: str | None, **context) -> str:
     env = environment()
     env.globals["scorecard_path"] = scorecard_path
     return render_page(env, template, SITE_URL,
@@ -90,7 +102,8 @@ def standalone_race(season: int, rnd: int) -> str:
     season_entries = entries[entries["Season"] == season]
     race = data.race(season, rnd, pred, season_entries[season_entries["RoundNumber"] == rnd],
                      data.driver_ids(season_entries))
-    return _standalone("race.html", f"{season}/scorecard/", active="races", race=race,
+    scorecard_path = f"{season}/scorecard/" if data.scorecard(season) else None
+    return _standalone("race.html", scorecard_path, active="races", race=race,
                        prev_race=None, next_race=None)
 
 

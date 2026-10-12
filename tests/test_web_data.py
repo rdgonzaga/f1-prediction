@@ -53,7 +53,7 @@ def test_old_csv_without_optional_columns_falls_back():
     race = make_race(ids={"A": "alpha"})
     a = race.rows[0]
     assert race.name == "Test Grand Prix"
-    assert a.driver_id == "alpha" and race.rows[1].driver_id == "b"
+    assert a.driver_id == "alpha" and race.rows[1].driver_id == "b-2026"
     assert a.team == "" and a.color == report.team_colors("")[1]
     assert a.points is None and a.dnf is None
     assert race.made == "" and race.notes == [] and race.warnings == []
@@ -176,3 +176,34 @@ def test_finish_text_reads_as_a_sentence():
     rows = make_race(actual=actual_frame().assign(Classified=["R", "1", "D", "W"])).rows
     assert [r.finish_text for r in rows] == ["Retired", "Finished 1st", "Disqualified", "Did not start"]
     assert make_race(actual=actual_frame().assign(Classified="")).rows[0].finish_text == ""
+
+
+def schedule_loader(calls):
+    def load(year):
+        calls.append(year)
+        return pd.DataFrame({"RoundNumber": [18], "EventName": ["United States Grand Prix"], "Other": [1]})
+    return load
+
+
+def test_schedule_is_cached_on_disk(tmp_path, monkeypatch):
+    monkeypatch.setattr(data.config, "RAW_DIR", tmp_path)
+    calls = []
+    for _ in range(2):
+        events = data.fetch_schedule(2026, schedule_loader(calls))
+        assert list(events["RoundNumber"]) == [18] and list(events["EventName"]) == ["United States Grand Prix"]
+    assert calls == [2026]
+
+
+def test_stale_schedule_is_used_when_the_lookup_fails(tmp_path, monkeypatch):
+    import os
+    monkeypatch.setattr(data.config, "RAW_DIR", tmp_path)
+    data.fetch_schedule(2026, schedule_loader([]))
+    path = next(tmp_path.glob("*2026*"))
+    os.utime(path, (0, 0))
+
+    def offline(year):
+        raise ConnectionError("offline")
+    assert list(data.fetch_schedule(2026, offline)["RoundNumber"]) == [18]
+    calls = []
+    data.fetch_schedule(2026, schedule_loader(calls))
+    assert calls == [2026]

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "_card.html" import season_cards %}
+{% block title %}Races{% endblock %}
+{% block content %}
+<h1>Races</h1>
+<p class="lede">Every saved prediction, newest first. <span class="badge-live">LIVE</span> means it was made before the race; the rest were made afterwards, using only earlier races.</p>
+{% for season in site.seasons %}
+<h2 class="section-title">{{ season.year }}</h2>
+{{ season_cards(season, root, with_next=loop.first) }}
+{% endfor %}
+{% endblock %}

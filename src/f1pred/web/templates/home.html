@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_hero.html" import podium, verdict %}
+{% from "_card.html" import season_cards %}
+{% block content %}
+{% set race = site.current.latest %}
+<section class="hero">
+  <p class="eyebrow">{% if race.live %}<span class="badge-live">LIVE</span>{% endif %}<span>Latest · Round {{ race.rnd }} · {{ race.season }}</span></p>
+  <h1><a href="{{ root }}{{ race.path }}">{{ race.name }}</a></h1>
+  <p class="lede">Every race is predicted once qualifying is done: the likely podium, and each driver's chance to win. <a href="{{ root }}how-it-works/">How it works</a></p>
+  {{ podium(race) }}
+  {{ verdict(race) }}
+  <p class="more"><a href="{{ root }}{{ race.path }}">Full timing tower →</a></p>
+</section>
+
+<h2 class="section-title">{{ site.current.year }} season</h2>
+{{ season_cards(site.current, root) }}
+
+{% set sc = site.scorecard_season %}
+{% if sc %}
+<section class="teaser">
+  <p class="teaser-head"><span class="big">{{ sc.picks_right }}/{{ sc.scored|length }}</span> winners picked in {{ sc.year }}</p>
+  <p>The model's order beat plain grid order in {{ sc.scorecard.beat }} of {{ sc.scorecard.races|length }} races. The percentages are what it adds.</p>
+  <a class="btn" href="{{ root }}{{ sc.scorecard_path }}">Season scorecard →</a>
+</section>
+{% endif %}
+{% endblock %}

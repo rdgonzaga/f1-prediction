@@ -16,7 +16,7 @@ def calls(monkeypatch):
     monkeypatch.setattr(weekend.predict, "run",
                         lambda *a, **k: calls.append(("predict", k["penalties"], k["pitlane"], k["slots"])))
     monkeypatch.setattr(weekend.report, "run", lambda season, rnd: calls.append(("report", season, rnd)) or "page")
-    monkeypatch.setattr(weekend.site, "build_site", lambda: calls.append("site"))
+    monkeypatch.setattr(weekend.web, "build_site", lambda: calls.append("site"))
     return calls
 
 

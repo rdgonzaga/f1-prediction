@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}F1 race predictions{% endblock %} · F1 Pred</title>
+<meta name="description" content="F1 race predictions made after qualifying: finishing order plus win, podium, points and retirement chances.">
+<script>document.documentElement.classList.add("js")</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Titillium+Web:wght@400;600;700;900&display=swap">
+{% if inline_css %}
+<style>{{ inline_css|safe }}</style>
+{% else %}
+<link rel="stylesheet" href="{{ root }}static/site.css">
+{% endif %}
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="{{ root }}"><span class="brand-mark"></span>F1<b>PRED</b></a>
+    <nav class="mainnav" aria-label="Main">
+      <a href="{{ root }}"{% if active == "home" %} aria-current="page"{% endif %}>Home</a>
+      <a href="{{ root }}races/"{% if active == "races" %} aria-current="page"{% endif %}>Races</a>
+      <a href="{{ root }}drivers/"{% if active == "drivers" %} aria-current="page"{% endif %}>Drivers</a>
+      {% if scorecard_path %}
+      <a href="{{ root }}{{ scorecard_path }}"{% if active == "scorecard" %} aria-current="page"{% endif %}>Scorecard</a>
+      {% endif %}
+      <a href="{{ root }}how-it-works/"{% if active == "how" %} aria-current="page"{% endif %}>How it works</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+{% block content %}{% endblock %}
+</main>
+<footer class="wrap sitefoot">
+  <p>Built from FastF1 timing data. Code and method on <a href="https://github.com/rdgonzaga/f1-prediction">GitHub</a>. Not affiliated with Formula 1.</p>
+</footer>
+{% if inline_js %}
+<script>{{ inline_js|safe }}</script>
+{% else %}
+<script src="{{ root }}static/site.js"></script>
+{% endif %}
+</body>
+</html>

@@ -54,3 +54,9 @@ def test_run_skips_backfilled_and_unfinished_races(tmp_path, monkeypatch):
 def test_race_with_partial_results_is_not_scored():
     partial = actual_frame().assign(Classified="")
     assert score.score_race(pred_frame(), partial) is None
+
+
+def test_race_result_labels():
+    result = score.race_result(actual_frame().assign(Classified=["1", "W", "D", "R"]))
+    assert list(result) == ["1", "DNS", "DSQ", "DNF"]
+    assert score.race_result(actual_frame().assign(Classified="")) is None

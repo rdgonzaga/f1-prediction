@@ -79,8 +79,9 @@ in hindsight doesn't count when you score it. `--backfill` saves one anyway.
 
 ## The website
 
-Every prediction is up at https://rdgonzaga.github.io/f1-prediction/, with the actual result next to
-it once the race is done. `weekend` and `score` both rebuild `site/` when they finish, so after a
+Every prediction is up at https://rdgonzaga.github.io/f1-prediction/. The latest race leads with its
+predicted podium and, once the race is done, how it went. There's also an archive of every race, a
+page per driver, the season scorecard and a plain-language explainer. `weekend` and `score` both rebuild `site/` when they finish, so after a
 race it's just:
 
 ```
@@ -157,7 +158,8 @@ kernel.
 
 ```
 src/f1pred/   fetch, build, features, model, evaluate, probabilities, dnf, predict, report,
-              score, weekend, plotting
+              score, season, weekend, plotting
+  web/        the website: page data, SVG charts, Jinja templates and CSS
 tests/        one test file per module, plus leakage checks in test_features.py
 notebooks/    exploration and review only
 reference/    power_units.csv, engine supplier per team per season

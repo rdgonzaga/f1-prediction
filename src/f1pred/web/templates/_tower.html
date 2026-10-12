@@ -1,0 +1,50 @@
+{% macro driver_link(row, root) %}<a href="{{ root }}drivers/{{ row.driver_id }}/">{{ row.code }}</a>{% endmacro %}
+
+{% macro tower(race, root) %}
+<div class="scroller">
+<table class="tower">
+<thead><tr><th>Pred</th><th></th><th class="l">Driver</th><th>Win</th><th>Finish</th><th class="l"></th></tr></thead>
+<tbody>
+{% for row in race.rows %}
+<tr>
+  <td class="pos">{{ row.pos }}</td>
+  <td class="stripe" style="--team: {{ row.color }}"><i></i></td>
+  <td class="drv">{{ driver_link(row, root) }}<span class="drv-team">{{ row.team }}</span></td>
+  <td class="num">{{ row.win|pct }}%</td>
+  <td class="num fin">{% if row.classified %}{{ row.finish }}{% elif row.finish %}<span class="out">{{ row.finish }}</span>{% else %}—{% endif %}</td>
+  <td class="l delta">
+    {% if row.classified %}
+      {% if row.gain == 0 %}<span class="hit" title="Exact">✓</span>
+      {% elif row.gain > 0 %}<span class="up">▲{{ row.gain }}</span>
+      {% else %}<span class="down">▼{{ -row.gain }}</span>{% endif %}
+    {% endif %}
+  </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endmacro %}
+
+{% macro field_table(race, root) %}
+<div class="scroller">
+<table>
+<thead><tr><th>Pred</th><th></th><th class="l">Driver</th><th class="l hide-sm">Team</th><th>Grid</th><th>Win</th><th>Podium</th><th>Points</th><th>DNF</th></tr></thead>
+<tbody>
+{% for row in race.rows %}
+<tr>
+  <td class="pos">{{ row.pos }}</td>
+  <td class="stripe" style="--team: {{ row.color }}"><i></i></td>
+  <td class="drv">{{ driver_link(row, root) }}</td>
+  <td class="l team hide-sm">{{ row.team }}</td>
+  <td class="num">{{ row.grid_label }}{% if row.move %}<span class="move">{{ "%+d"|format(row.move) }}</span>{% endif %}</td>
+  <td class="num win">{{ row.win|pct }}</td>
+  <td class="num">{{ row.podium|pct }}</td>
+  <td class="num">{{ row.points|pct }}</td>
+  <td class="num{% if row.dnf and row.dnf >= 20 %} risk{% endif %}">{{ row.dnf|pct }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endmacro %}

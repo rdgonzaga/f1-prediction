@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How it works · F1 Pred</title>
+<meta name="description" content="F1 race predictions made after qualifying: finishing order plus win, podium, points and retirement chances.">
+<script>document.documentElement.classList.add("js")</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Titillium+Web:wght@400;600;700;900&display=swap">
+<link rel="stylesheet" href="../static/site.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="../"><span class="brand-mark"></span>F1<b>PRED</b></a>
+    <nav class="mainnav" aria-label="Main">
+      <a href="../">Home</a>
+      <a href="../races/">Races</a>
+      <a href="../drivers/">Drivers</a>
+      <a href="../2026/scorecard/">Scorecard</a>
+      <a href="../how-it-works/" aria-current="page">How it works</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<h1>How it works</h1>
+<div class="prose">
+  <p class="lede">Each race is predicted once qualifying is done: the likely finishing order, and every driver's chance to win, reach the podium, score points or retire.</p>
+
+  <h2>Is it any good?</h2>
+  <p>Straight answer: it doesn't predict the finishing order any better than assuming everyone finishes where they started. That was tested across 48 races in 2024 and 2025, model against grid, race by race.</p>
+  <p>The percentages are the real output, and a starting grid can't give you those. The grid tells you who starts first. It can't tell you he's 31% to win, or that someone has a 33% chance of not finishing. Checked against races that already happened, those numbers come out about right. The <a href="../2026/scorecard/">season scorecard</a> tracks it race by race.</p>
+
+  <h2>What goes in</h2>
+  <p>Mostly the grid and qualifying: grid slot, pit-lane start, qualifying position, gap to pole, gap to teammate. On top of that, one pace estimate from practice lap times, recent finishes and the team's recent qualifying, for the fast car stuck at the back. It also knows the track: how well grid order has held there before and how often it brings out a safety car.</p>
+
+  <h2>How the chances are made</h2>
+  <p>A ranking model (XGBoost, pairwise) learns to order drivers within a race. Each race is then simulated 20,000 times from those scores, with the spread tuned on how the top three actually finished recently. A separate model estimates each driver's chance of retiring.</p>
+  <p>Everything is walk-forward: a race is only ever predicted from races that happened before it.</p>
+
+  <h2>Live, or made after the race</h2>
+  <p>Races marked <span class="badge-live">LIVE</span> were real forecasts, made after qualifying and before lights out. The earlier 2026 races were filled in afterwards, still using only the races before them, so the season has a full record. Only live ones count as a real test.</p>
+
+  <h2>Grid penalties</h2>
+  <p>Penalties never appear in the timing data. They are entered by hand after qualifying, so a missed one means the model assumes that driver starts where they qualified.</p>
+
+  <p>Code, tests and the full write-up are on <a href="https://github.com/rdgonzaga/f1-prediction">GitHub</a>.</p>
+</div>
+</main>
+<footer class="wrap sitefoot">
+  <p>Built from FastF1 timing data. Code and method on <a href="https://github.com/rdgonzaga/f1-prediction">GitHub</a>. Not affiliated with Formula 1.</p>
+</footer>
+<script src="../static/site.js"></script>
+</body>
+</html>

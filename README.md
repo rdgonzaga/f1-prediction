@@ -70,20 +70,24 @@ anywhere in the qualifying messages. They live in FIA stewards' documents, which
 carry. So glance at the F1 site after qualifying, otherwise the model assumes everyone starts where
 they qualified.
 
+When the official grid is out, enter the slot itself instead: `--grid RUS=19`. That's more accurate
+than a place penalty, since "back of the grid" depends on who else got penalised. At Singapore 2026,
+`--penalty RUS=30` put Russell 22nd when he actually started 19th.
+
 **Run it before the race starts.** Once the result exists, `predict` refuses, since a prediction made
 in hindsight doesn't count when you score it. `--backfill` saves one anyway.
 
 ## The website
 
 Every prediction is up at https://rdgonzaga.github.io/f1-prediction/, with the actual result next to
-it once the race is done. To update it after a race:
+it once the race is done. `weekend` and `score` both rebuild `site/` when they finish, so after a
+race it's just:
 
 ```
 python -m f1pred score --refresh
-python -m f1pred site
 ```
 
-Then commit `site/` and push. GitHub deploys it about a minute later. The predictions themselves are
+Then commit `site/` and push. `python -m f1pred site` rebuilds it on its own if you need to. GitHub deploys it about a minute later. The predictions themselves are
 still made on your machine, since they need the downloaded timing data and any penalties you entered.
 
 ## The other commands

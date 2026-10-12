@@ -73,3 +73,30 @@ def build_site(out_dir: Path | None = None,
     print(f"Wrote the site to {out_dir} ({count} race pages, {len(site.drivers)} drivers). "
           f"Open index.html to check it.")
     return out_dir
+
+
+def _standalone(template: str, scorecard_path: str, **context) -> str:
+    env = environment()
+    env.globals["scorecard_path"] = scorecard_path
+    return render_page(env, template, SITE_URL,
+                       inline_css=(STATIC_DIR / "site.css").read_text(encoding="utf-8"),
+                       inline_js=(STATIC_DIR / "site.js").read_text(encoding="utf-8"), **context)
+
+
+def standalone_race(season: int, rnd: int) -> str:
+    """One race page with CSS and JS inlined, linking back to the live site."""
+    pred = pd.read_csv(config.prediction_path(season, rnd, ".csv"))
+    entries = processed.load_processed()[0]
+    season_entries = entries[entries["Season"] == season]
+    race = data.race(season, rnd, pred, season_entries[season_entries["RoundNumber"] == rnd],
+                     data.driver_ids(season_entries))
+    return _standalone("race.html", f"{season}/scorecard/", active="races", race=race,
+                       prev_race=None, next_race=None)
+
+
+def standalone_scorecard(season: int) -> str:
+    card = data.scorecard(season)
+    if card is None:
+        raise SystemExit(f"No scored predictions for {season} yet.")
+    return _standalone("scorecard.html", f"{season}/scorecard/", active="scorecard",
+                       season=data.Season(season, [], scorecard=card))

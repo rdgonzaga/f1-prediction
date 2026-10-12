@@ -79,3 +79,18 @@ def test_driver_page_has_stats_and_log(built):
     page = read(built, "drivers/alpha")
     assert "Alpha" in page and "Races as favourite" in page
     assert page.count('href="../../2026/round-') >= 3
+
+
+def test_failed_build_leaves_the_old_site_alone(built, monkeypatch):
+    real = web.render_page
+
+    def flaky(env, template, root, **context):
+        if template == "driver.html":
+            raise RuntimeError("boom")
+        return real(env, template, root, **context)
+    monkeypatch.setattr(web, "render_page", flaky)
+    before = read(built, "")
+    with pytest.raises(RuntimeError):
+        web.build_site(built, schedule=lambda year: pd.DataFrame())
+    assert read(built, "") == before
+    assert not any(p.name.startswith("site.") for p in built.parent.iterdir())

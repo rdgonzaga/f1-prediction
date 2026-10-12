@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
-from f1pred import report, score
+from f1pred import config, report, score
 from f1pred import season as season_scores
 
 MANILA_OFFSET = pd.Timedelta(hours=8)
@@ -163,7 +163,7 @@ def race(season: int, rnd: int, pred: pd.DataFrame, actual: pd.DataFrame,
         code, team = str(r["Abbreviation"]), _text(r.get("TeamName"))
         rows.append(Row(
             pos=int(r["PredictedPosition"]), code=code,
-            driver_id=_text(r.get("DriverId")) or ids.get(code, code.lower()),
+            driver_id=_text(r.get("DriverId")) or ids.get(code, f"{code.lower()}-{season}"),
             team=team, color=report.team_colors(team)[1], grid=_num(r.get("Grid")),
             win=float(r["WinPct"]), podium=float(r["PodiumPct"]),
             points=_num(r.get("PointsPct")), dnf=_num(r.get("DnfPct")),
@@ -216,12 +216,33 @@ class NextRace:
         return self.name.removesuffix(" Grand Prix")
 
 
-def fetch_schedule(year: int) -> pd.DataFrame:
+SCHEDULE_MAX_AGE = pd.Timedelta(days=7)
+
+
+def _fastf1_schedule(year: int) -> pd.DataFrame:
     import fastf1
 
     from f1pred import fetch
     fetch.enable_cache()
     return fastf1.get_event_schedule(year, include_testing=False)
+
+
+def fetch_schedule(year: int, loader: Callable[[int], pd.DataFrame] = _fastf1_schedule) -> pd.DataFrame:
+    """The season's rounds, from a copy on disk refreshed weekly, falling back to the copy when offline."""
+    path = config.RAW_DIR / f"schedule_{year}.csv"
+    if path.exists():
+        age = pd.Timestamp.now() - pd.Timestamp.fromtimestamp(path.stat().st_mtime)
+        if age < SCHEDULE_MAX_AGE:
+            return pd.read_csv(path)
+    try:
+        events = loader(year)[["RoundNumber", "EventName"]]
+    except Exception:
+        if path.exists():
+            return pd.read_csv(path)
+        raise
+    path.parent.mkdir(parents=True, exist_ok=True)
+    events.to_csv(path, index=False)
+    return events
 
 
 def next_race(year: int, last_round: int, schedule: Callable[[int], pd.DataFrame] = fetch_schedule) -> NextRace | None:

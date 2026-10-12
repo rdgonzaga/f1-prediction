@@ -29,6 +29,7 @@ def test_run_writes_a_standalone_page_and_asks_for_a_png(saved):
     assert 'href="https://rdgonzaga.github.io/f1-prediction/races/"' in page
     assert "Azerbaijan Grand Prix" in page and "Predicted before the race" in page
     assert "VER +5" in page and "Result pending" in page
+    assert "scorecard/" not in page
 
 
 def test_missing_prediction_is_reported(tmp_path, monkeypatch):

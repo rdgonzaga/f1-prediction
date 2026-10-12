@@ -11,6 +11,7 @@ from f1pred import season as season_scores
 
 MANILA_OFFSET = pd.Timedelta(hours=8)
 PODIUM = {"1", "2", "3"}
+FINISH_LABELS = {"DNF": "Retired", "DSQ": "Disqualified", "DNS": "Did not start"}
 NON_FINISH_WORDS = {"DNF": "retired", "DSQ": "was disqualified", "DNS": "did not start"}
 
 
@@ -64,6 +65,14 @@ class Row:
     @property
     def on_color(self) -> str:
         return report.on_color(self.color)
+
+    @property
+    def finish_text(self) -> str:
+        if self.finish is None:
+            return ""
+        if self.classified:
+            return f"Finished {ordinal(int(self.finish))}"
+        return FINISH_LABELS.get(self.finish, self.finish)
 
 
 @dataclass

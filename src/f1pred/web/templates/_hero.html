@@ -7,7 +7,7 @@
     <span class="pod-team">{{ row.team or "Unknown team" }}</span>
     <span class="pod-win"><b>{{ row.win|pct(0) }}%</b> to win</span>
     {% if row.finish %}
-    <span class="pod-fin">Finished {{ ordinal(row.finish|int) if row.classified else row.finish }}</span>
+    <span class="pod-fin">{{ row.finish_text }}</span>
     {% endif %}
   </div>
   {% endfor %}

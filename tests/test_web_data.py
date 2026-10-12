@@ -170,3 +170,9 @@ def test_driver_stats_follow_the_results(saved):
     assert [e.race.rnd for e in a.chart_entries] == [1, 2, 3]
     assert c.places_off is None and c.podiums == 0
     assert d.podiums == 2 and d.places_off == 1.0
+
+
+def test_finish_text_reads_as_a_sentence():
+    rows = make_race(actual=actual_frame().assign(Classified=["R", "1", "D", "W"])).rows
+    assert [r.finish_text for r in rows] == ["Retired", "Finished 1st", "Disqualified", "Did not start"]
+    assert make_race(actual=actual_frame().assign(Classified="")).rows[0].finish_text == ""

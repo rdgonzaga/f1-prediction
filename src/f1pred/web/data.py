@@ -297,8 +297,75 @@ class Season:
         return f"{self.year}/scorecard/"
 
 
-def drivers(seasons: list[Season]) -> list:
-    return []
+def display_name(driver_id: str) -> str:
+    return driver_id.replace("_", " ").title()
+
+
+@dataclass
+class Entry:
+    race: Race
+    row: Row
+
+
+@dataclass
+class Driver:
+    driver_id: str
+    code: str
+    team: str
+    color: str
+    entries: list[Entry] = field(default_factory=list)
+
+    @property
+    def name(self) -> str:
+        return display_name(self.driver_id)
+
+    @property
+    def path(self) -> str:
+        return f"drivers/{self.driver_id}/"
+
+    @property
+    def wins(self) -> int:
+        return sum(e.row.finish == "1" for e in self.entries)
+
+    @property
+    def podiums(self) -> int:
+        return sum(e.row.finish in PODIUM for e in self.entries)
+
+    def _favourite(self, e: Entry) -> bool:
+        return e.race.favourite.driver_id == self.driver_id
+
+    @property
+    def favourite_races(self) -> int:
+        return sum(self._favourite(e) for e in self.entries)
+
+    @property
+    def favourite_scored(self) -> int:
+        return sum(self._favourite(e) and not e.race.pending for e in self.entries)
+
+    @property
+    def favourite_right(self) -> int:
+        return sum(self._favourite(e) and e.race.winner == e.row.code for e in self.entries)
+
+    @property
+    def places_off(self) -> float | None:
+        gaps = [abs(e.row.gain) for e in self.entries if e.row.classified]
+        return sum(gaps) / len(gaps) if gaps else None
+
+    @property
+    def chart_entries(self) -> list[Entry]:
+        latest = self.entries[-1].race.season
+        return [e for e in self.entries if e.race.season == latest]
+
+
+def drivers(seasons: list[Season]) -> list[Driver]:
+    by_id: dict[str, Driver] = {}
+    for season_ in sorted(seasons, key=lambda s: s.year):
+        for race_ in season_.races:
+            for row in race_.rows:
+                d = by_id.setdefault(row.driver_id, Driver(row.driver_id, row.code, row.team, row.color))
+                d.code, d.team, d.color = row.code, row.team, row.color
+                d.entries.append(Entry(race_, row))
+    return sorted(by_id.values(), key=lambda d: (d.team, d.name))
 
 
 @dataclass

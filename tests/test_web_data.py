@@ -151,3 +151,22 @@ def test_load_groups_races_and_counts_picks(saved):
     assert site.scorecard_season is season and season.scorecard_path == "2026/scorecard/"
     assert season.races[0].rows[0].driver_id == "alpha"
     assert data.scorecard(2030) is None
+
+
+def test_display_name():
+    assert data.display_name("max_verstappen") == "Max Verstappen"
+    assert data.display_name("antonelli") == "Antonelli"
+
+
+def test_driver_stats_follow_the_results(saved):
+    site = data.load(score.load_predictions(), saved, no_schedule)
+    drivers = {d.driver_id: d for d in site.drivers}
+    assert sorted(drivers) == IDS
+    a, c, d = drivers["alpha"], drivers["charlie"], drivers["delta"]
+    assert (a.wins, a.podiums, a.favourite_races, a.favourite_scored, a.favourite_right) == (2, 2, 3, 2, 2)
+    assert a.places_off == 0.0
+    assert a.team == "McLaren" and a.entries[0].row.team == "Ferrari"
+    assert a.name == "Alpha" and a.path == "drivers/alpha/"
+    assert [e.race.rnd for e in a.chart_entries] == [1, 2, 3]
+    assert c.places_off is None and c.podiums == 0
+    assert d.podiums == 2 and d.places_off == 1.0

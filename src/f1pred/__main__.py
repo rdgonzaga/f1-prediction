@@ -31,6 +31,7 @@ def main() -> None:
     p_pred.add_argument("--no-refresh", action="store_true", help="Skip fetch/build")
     p_pred.add_argument("--penalty", nargs="+", metavar="DRIVER=PLACES", help="Grid place penalties, e.g. VER=5 NOR=3")
     p_pred.add_argument("--pitlane", nargs="+", metavar="DRIVER", help="Pit lane starters, e.g. STR")
+    p_pred.add_argument("--grid", nargs="+", metavar="DRIVER=SLOT", help="Exact starting slots, e.g. RUS=19")
     p_pred.add_argument("--backfill", action="store_true",
                         help="Allow predicting a race that already has a result (not counted by score)")
 
@@ -39,6 +40,7 @@ def main() -> None:
     p_week.add_argument("event", help="Round number or event name, e.g. 16")
     p_week.add_argument("--penalty", nargs="+", metavar="DRIVER=PLACES", help="Grid place penalties, e.g. VER=5 NOR=3")
     p_week.add_argument("--pitlane", nargs="+", metavar="DRIVER", help="Pit lane starters, e.g. STR")
+    p_week.add_argument("--grid", nargs="+", metavar="DRIVER=SLOT", help="Exact starting slots, e.g. RUS=19")
     p_week.add_argument("--wait", type=int, default=0, metavar="MINUTES",
                         help="Keep retrying every 5 min for up to this long if qualifying isn't out yet")
 
@@ -59,8 +61,10 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "score":
-        from f1pred import score
-        score.run(args.season, args.refresh, args.include_backfilled)
+        from f1pred import score, site
+        card = score.run(args.season, args.refresh, args.include_backfilled)
+        if not card.empty and not args.include_backfilled:
+            site.build_site()
 
     if args.command == "build":
         from f1pred import build
@@ -107,12 +111,12 @@ def main() -> None:
         from f1pred import predict
         predict.run(args.season, args.event, refresh=not args.no_refresh,
                     penalties=predict.parse_penalties(args.penalty), pitlane=args.pitlane,
-                    backfill=args.backfill)
+                    backfill=args.backfill, slots=predict.parse_penalties(args.grid))
 
     if args.command == "weekend":
         from f1pred import predict, weekend
         weekend.run(args.season, args.event, penalties=predict.parse_penalties(args.penalty), pitlane=args.pitlane,
-                    wait_minutes=args.wait)
+                    wait_minutes=args.wait, slots=predict.parse_penalties(args.grid))
 
     if args.command == "fetch":
         from f1pred import fetch

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from f1pred import build, fetch, predict, report
+from f1pred import build, fetch, predict, report, site
 
 
 def quali_ready(log_df: pd.DataFrame, season: int, rnd: int) -> bool:
@@ -16,7 +16,8 @@ def quali_ready(log_df: pd.DataFrame, season: int, rnd: int) -> bool:
 
 
 def run(season: int, event: str, penalties: dict[str, int] | None = None, pitlane: list[str] | None = None,
-        wait_minutes: int = 0, poll_minutes: int = 5, sleep: Callable[[float], None] = time.sleep) -> Path:
+        wait_minutes: int = 0, poll_minutes: int = 5, sleep: Callable[[float], None] = time.sleep,
+        slots: dict[str, int] | None = None) -> Path:
     rnd = predict.resolve_round(season, event)
     waited = 0
     while not quali_ready(fetch.run([season], rounds=[rnd]), season, rnd):
@@ -29,5 +30,7 @@ def run(season: int, event: str, penalties: dict[str, int] | None = None, pitlan
         waited += poll_minutes
 
     build.run()
-    predict.run(season, str(rnd), refresh=False, penalties=penalties, pitlane=pitlane)
-    return report.run(season, rnd)
+    predict.run(season, str(rnd), refresh=False, penalties=penalties, pitlane=pitlane, slots=slots)
+    page = report.run(season, rnd)
+    site.build_site()
+    return page

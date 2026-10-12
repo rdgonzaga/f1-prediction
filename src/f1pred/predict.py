@@ -28,25 +28,35 @@ def parse_penalties(items: list[str] | None) -> dict[str, int]:
     return penalties
 
 
-def apply_grid_penalties(race: pd.DataFrame, penalties: dict[str, int], pitlane: set[str]) -> pd.Series:
-    """Grid slots after place penalties; pit lane starters get 0."""
-    unknown = (set(penalties) | pitlane) - set(race["Abbreviation"])
+def apply_grid_penalties(race: pd.DataFrame, penalties: dict[str, int], pitlane: set[str],
+                         slots: dict[str, int] | None = None) -> pd.Series:
+    """Grid slots after place penalties and exact slots; pit lane starters get 0."""
+    slots = slots or {}
+    unknown = (set(penalties) | pitlane | set(slots)) - set(race["Abbreviation"])
     if unknown:
         raise SystemExit(f"Unknown driver(s) {sorted(unknown)}; entries are {sorted(race['Abbreviation'])}")
+    n_starters = len(race) - len(pitlane)
+    if set(slots) & pitlane:
+        raise SystemExit(f"{sorted(set(slots) & pitlane)} can't have a grid slot and start from the pit lane")
+    if len(set(slots.values())) < len(slots) or any(not 1 <= s <= n_starters for s in slots.values()):
+        raise SystemExit(f"Grid slots must be unique and between 1 and {n_starters}: {slots}")
     quali = race["QPosition"].fillna(race["QPosition"].max() + 1)
     ranked = race.assign(
         Target=quali + race["Abbreviation"].map(penalties).fillna(0),
         Penalised=race["Abbreviation"].isin(penalties),
         Quali=quali,
     )
-    starters = ranked[~ranked["Abbreviation"].isin(pitlane)].sort_values(["Target", "Penalised", "Quali"])
+    fixed = race["Abbreviation"].isin(slots)
+    rest = ranked[~ranked["Abbreviation"].isin(pitlane) & ~fixed].sort_values(["Target", "Penalised", "Quali"])
     grid = pd.Series(0.0, index=race.index)
-    grid.loc[starters.index] = range(1, len(starters) + 1)
+    grid.loc[fixed] = race.loc[fixed, "Abbreviation"].map(slots).astype(float)
+    grid.loc[rest.index] = [s for s in range(1, n_starters + 1) if s not in set(slots.values())]
     return grid
 
 
-def describe_overrides(penalties: dict[str, int], pitlane: set[str]) -> str:
-    parts = [f"{d} +{p}" for d, p in penalties.items()] + [f"{d} pit lane" for d in sorted(pitlane)]
+def describe_overrides(penalties: dict[str, int], pitlane: set[str], slots: dict[str, int] | None = None) -> str:
+    parts = ([f"{d} +{p}" for d, p in penalties.items()] + [f"{d} P{s}" for d, s in (slots or {}).items()]
+             + [f"{d} pit lane" for d in sorted(pitlane)])
     return "Grid overrides: " + ", ".join(parts) if parts else ""
 
 
@@ -76,7 +86,8 @@ def guard_already_run(race: pd.DataFrame, season: int, rnd: int, backfill: bool)
 
 
 def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int] | None = None,
-        pitlane: list[str] | None = None, backfill: bool = False) -> pd.DataFrame:
+        pitlane: list[str] | None = None, backfill: bool = False,
+        slots: dict[str, int] | None = None) -> pd.DataFrame:
     rnd = resolve_round(season, event)
     if refresh:
         fetch.run([season], rounds=[rnd])
@@ -84,10 +95,11 @@ def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int]
 
     penalties = penalties or {}
     pitlane = {d.upper() for d in pitlane or []}
+    slots = slots or {}
     entries, laps, conditions = build.load_processed()
     target = (entries["Season"] == season) & (entries["RoundNumber"] == rnd)
-    if penalties or pitlane:
-        entries.loc[target, "GridPosition"] = apply_grid_penalties(entries[target], penalties, pitlane)
+    if penalties or pitlane or slots:
+        entries.loc[target, "GridPosition"] = apply_grid_penalties(entries[target], penalties, pitlane, slots)
     feats = build_features(entries, laps, conditions)
     race = feats[(feats["Season"] == season) & (feats["RoundNumber"] == rnd)]
     if race.empty or race["QPosition"].isna().all():
@@ -110,7 +122,7 @@ def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int]
     stem = config.prediction_path(season, rnd, "")
     out_dir = stem.parent
     out_dir.mkdir(parents=True, exist_ok=True)
-    overrides = describe_overrides(penalties, pitlane)
+    overrides = describe_overrides(penalties, pitlane, slots)
     pre_race = not already_run
     out.assign(
         DriverId=pred["DriverId"],

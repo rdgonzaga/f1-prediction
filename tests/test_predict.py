@@ -75,3 +75,20 @@ def test_markdown_table_and_headline():
     assert table[2] == "| 1 | ANT | 59.2 | 90.6 |"
     assert len(table) == 6
     assert headline(out) == "Favourite: ANT (59% win) | Most likely podium: ANT, NOR, RUS"
+
+
+def test_exact_grid_slot_places_driver_and_shifts_the_rest():
+    race = quali(["A", "B", "C", "D", "E"])
+    assert grid_order(race, apply_grid_penalties(race, {}, set(), {"A": 4}))[0] == ["B", "C", "D", "A", "E"]
+    grid = apply_grid_penalties(race, {"B": 1}, {"E"}, {"D": 1})
+    assert grid_order(race, grid) == (["D", "A", "C", "B"], ["E"])
+
+
+def test_bad_grid_slots_are_rejected():
+    race = quali(["A", "B", "C"])
+    with pytest.raises(SystemExit):
+        apply_grid_penalties(race, {}, set(), {"A": 4})
+    with pytest.raises(SystemExit):
+        apply_grid_penalties(race, {}, set(), {"A": 2, "B": 2})
+    with pytest.raises(SystemExit):
+        apply_grid_penalties(race, {}, {"A"}, {"A": 1})

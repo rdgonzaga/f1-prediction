@@ -117,3 +117,63 @@ def test_run_regrid_repredicts_without_refetching(calls, tmp_path):
     pd.DataFrame({"Abbreviation": ["RUS"], "PreRace": [True], "GridSource": ["provisional"]}).to_csv(path, index=False)
     runner.run(2026, now=at("2026-11-08 10:00"))
     assert calls == [("predict", "20", False), ("report", 20), "site"]
+
+
+def fake_git(branch="main", changed="M site/index.html", push_fails=False):
+    calls = []
+
+    def run_git(*args):
+        calls.append(args)
+        if args[0] == "rev-parse":
+            return branch
+        if args[0] == "status":
+            return changed
+        if args[0] == "push" and push_fails and ("pull", "--rebase", "--autostash") not in calls:
+            raise runner.subprocess.CalledProcessError(1, "git push")
+        return ""
+    return run_git, calls
+
+
+def test_publish_commits_site_with_the_usual_message():
+    run_git, calls = fake_git()
+    assert runner.publish(runner.Step("after_race", 20, ""), "Mexico City Grand Prix", run_git)
+    assert ("commit", "-m", "chore: add the Mexico City result to the site", "--", "site") in calls
+    assert calls[-1] == ("push",)
+
+
+def test_publish_names_a_prediction():
+    run_git, calls = fake_git()
+    runner.publish(runner.Step("predict", 20, ""), "São Paulo Grand Prix", run_git)
+    assert ("commit", "-m", "chore: add the São Paulo prediction to the site", "--", "site") in calls
+
+
+@pytest.mark.parametrize("branch, changed", [("feat/42-next-command", "M site/index.html"), ("main", "")])
+def test_publish_skips_off_main_or_when_unchanged(branch, changed):
+    run_git, calls = fake_git(branch, changed)
+    assert not runner.publish(runner.Step("predict", 20, ""), "X Grand Prix", run_git)
+    assert not any(c[0] in ("commit", "push") for c in calls)
+
+
+def test_publish_rebases_when_main_moved():
+    run_git, calls = fake_git(push_fails=True)
+    assert runner.publish(runner.Step("after_race", 20, ""), "X Grand Prix", run_git)
+    assert calls[-2:] == [("pull", "--rebase", "--autostash"), ("push",)]
+
+
+def test_run_only_publishes_when_asked(calls, monkeypatch):
+    published = []
+    monkeypatch.setattr(runner, "publish", lambda step, name: published.append((step.action, name)))
+    runner.run(2026, now=at("2026-11-08 21:00"))
+    runner.run(2026, now=at("2026-11-07 18:30"), publish_site=True)
+    assert published == []
+    runner.run(2026, now=at("2026-11-08 21:00"), publish_site=True)
+    assert published == [("after_race", "São Paulo Grand Prix")]
+
+
+def test_log_appends_output(calls, tmp_path, monkeypatch):
+    monkeypatch.setattr(runner.sys, "stdout", runner.sys.stdout)
+    monkeypatch.setattr(runner.sys, "stderr", runner.sys.stderr)
+    log = tmp_path / "next.log"
+    runner.run(2026, now=at("2026-11-07 18:30"), log=str(log))
+    runner.sys.stdout.close()
+    assert "São Paulo Grand Prix qualifying is on" in log.read_text(encoding="utf-8")

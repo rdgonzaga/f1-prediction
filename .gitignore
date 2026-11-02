@@ -38,3 +38,6 @@ Thumbs.db
 # brainstorming companion mockups
 .superpowers/
 docs/superpowers/
+
+# runner log
+*.log

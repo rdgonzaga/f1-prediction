@@ -1,6 +1,8 @@
 """Work out where the race weekend is and run whatever step is due."""
 from __future__ import annotations
 
+import subprocess
+import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import timedelta, timezone
@@ -123,11 +125,42 @@ def plan(sess: pd.DataFrame, now: pd.Timestamp, files: Callable[[int], RoundFile
     return Step("wait", rnd, f"Nothing due, {name} is scored. {upcoming(sess, now)}")
 
 
-def run(season: int | None = None, wait_minutes: int = 0, now: pd.Timestamp | None = None) -> Step:
+def git(*args: str) -> str:
+    return subprocess.run(["git", *args], cwd=config.PROJECT_ROOT, check=True,
+                          capture_output=True, text=True, encoding="utf-8").stdout.strip()
+
+
+def publish(step: Step, event_name: str, run_git: Callable[..., str] = git) -> bool:
+    """Commit and push site/ on main; skip anywhere else so a feature branch never gets site commits."""
+    branch = run_git("rev-parse", "--abbrev-ref", "HEAD")
+    if branch != "main":
+        print(f"Not publishing: on branch {branch}, not main.")
+        return False
+    if not run_git("status", "--porcelain", "--", "site"):
+        print("Not publishing: site/ is unchanged.")
+        return False
+    what = "result" if step.action == "after_race" else "prediction"
+    run_git("add", "--", "site")
+    run_git("commit", "-m", f"chore: add the {event_name.removesuffix(' Grand Prix')} {what} to the site", "--", "site")
+    try:
+        run_git("push")
+    except subprocess.CalledProcessError:
+        run_git("pull", "--rebase", "--autostash")
+        run_git("push")
+    print("Published site/ to GitHub Pages.")
+    return True
+
+
+def run(season: int | None = None, wait_minutes: int = 0, now: pd.Timestamp | None = None,
+        publish_site: bool = False, log: str | None = None) -> Step:
+    if log:
+        sys.stdout = sys.stderr = open(log, "a", encoding="utf-8", buffering=1)
+        print(f"\n[{pd.Timestamp.now():%Y-%m-%d %H:%M}]")
     season = season or pd.Timestamp.now().year
     now = now or pd.Timestamp.now(tz="UTC")
     scored = scored_rounds()
-    step = plan(sessions(season), now, lambda rnd: round_files(season, rnd, scored))
+    sess = sessions(season)
+    step = plan(sess, now, lambda rnd: round_files(season, rnd, scored))
     print(step.message)
 
     if step.action == "predict":
@@ -141,6 +174,10 @@ def run(season: int | None = None, wait_minutes: int = 0, now: pd.Timestamp | No
             market.run(season, [step.rnd])
         if not score.run(season, refresh=True).empty:
             web.build_site()
-    if step.action != "wait":
-        print("\nDone. If site/ changed, commit and push it to publish.")
+    if step.action == "wait":
+        return step
+    if publish_site:
+        publish(step, str(sess.loc[sess["RoundNumber"] == step.rnd, "EventName"].iloc[0]))
+    else:
+        print("\nDone. If site/ changed, commit and push it, or run with --publish.")
     return step

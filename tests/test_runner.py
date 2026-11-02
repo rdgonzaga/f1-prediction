@@ -10,6 +10,7 @@ SESS = pd.DataFrame({
     "QualiUTC": pd.to_datetime(["2026-10-31 21:00", "2026-11-07 18:00"], utc=True),
     "RaceUTC": pd.to_datetime(["2026-11-01 20:00", "2026-11-08 17:00"], utc=True),
 })
+NO_FIXES = {"penalties": None, "pitlane": None, "slots": None}
 DONE = RoundFiles(grid_source="official", pre_race=True, market=True, scored=True)
 
 
@@ -92,8 +93,8 @@ def calls(monkeypatch, tmp_path):
     calls = []
     monkeypatch.setattr(runner.config, "PREDICTIONS_DIR", tmp_path)
     monkeypatch.setattr(runner, "sessions", lambda season: SESS)
-    monkeypatch.setattr(runner.weekend, "run", lambda season, event, wait_minutes: calls.append(("weekend", event)))
-    monkeypatch.setattr(runner.predict, "run", lambda season, event, refresh: calls.append(("predict", event, refresh)))
+    monkeypatch.setattr(runner.weekend, "run", lambda season, event, wait_minutes, **grid: calls.append(("weekend", event, grid)))
+    monkeypatch.setattr(runner.predict, "run", lambda season, event, refresh, **grid: calls.append(("predict", event, refresh, grid)))
     monkeypatch.setattr(runner.report, "run", lambda season, rnd: calls.append(("report", rnd)))
     monkeypatch.setattr(runner.web, "build_site", lambda: calls.append("site"))
     monkeypatch.setattr(runner.market, "run", lambda season, rounds: calls.append(("market", rounds)))
@@ -103,7 +104,7 @@ def calls(monkeypatch, tmp_path):
 
 def test_run_predicts_through_weekend(calls):
     runner.run(2026, now=at("2026-11-07 20:00"))
-    assert calls == [("weekend", "20")]
+    assert calls == [("weekend", "20", NO_FIXES)]
 
 
 def test_run_after_race_fetches_odds_then_scores(calls):
@@ -116,7 +117,21 @@ def test_run_regrid_repredicts_without_refetching(calls, tmp_path):
     path.parent.mkdir(parents=True)
     pd.DataFrame({"Abbreviation": ["RUS"], "PreRace": [True], "GridSource": ["provisional"]}).to_csv(path, index=False)
     runner.run(2026, now=at("2026-11-08 10:00"))
-    assert calls == [("predict", "20", False), ("report", 20), "site"]
+    assert calls == [("predict", "20", False, NO_FIXES), ("report", 20), "site"]
+
+
+def test_run_passes_grid_fixes_to_weekend(calls):
+    runner.run(2026, now=at("2026-11-07 20:00"), penalties={"VER": 5}, pitlane=["STR"])
+    assert calls == [("weekend", "20", {"penalties": {"VER": 5}, "pitlane": ["STR"], "slots": None})]
+
+
+def test_grid_fixes_repredict_a_settled_round(calls, tmp_path):
+    path = tmp_path / "2026" / "round_20" / "2026_R20.csv"
+    path.parent.mkdir(parents=True)
+    pd.DataFrame({"Abbreviation": ["RUS"], "PreRace": [True], "GridSource": ["official"]}).to_csv(path, index=False)
+    runner.run(2026, now=at("2026-11-08 10:00"), slots={"RUS": 19})
+    assert calls == [("predict", "20", False, {"penalties": None, "pitlane": None, "slots": {"RUS": 19}}),
+                     ("report", 20), "site"]
 
 
 def fake_git(branch="main", changed="M site/index.html", push_fails=False):
@@ -177,3 +192,34 @@ def test_log_appends_output(calls, tmp_path, monkeypatch):
     runner.run(2026, now=at("2026-11-07 18:30"), log=str(log))
     runner.sys.stdout.close()
     assert "São Paulo Grand Prix qualifying is on" in log.read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def toasts(monkeypatch):
+    sent = []
+    monkeypatch.setattr(runner.notify, "toast", lambda title, body: sent.append((title, body)))
+    return sent
+
+
+def test_notify_after_a_step(calls, toasts):
+    runner.run(2026, now=at("2026-11-08 21:00"), notify_me=True)
+    assert toasts == [("F1 Pred", "São Paulo Grand Prix scored.")]
+
+
+def test_notify_stays_quiet_when_nothing_is_due(calls, toasts):
+    runner.run(2026, now=at("2026-10-01"), notify_me=True)
+    assert toasts == []
+
+
+def test_notify_on_failure_and_reraise(calls, toasts, monkeypatch):
+    def broken(season, event, wait_minutes, **grid):
+        raise SystemExit("Qualifying for 2026 round 20 isn't available yet.")
+    monkeypatch.setattr(runner.weekend, "run", broken)
+    with pytest.raises(SystemExit):
+        runner.run(2026, now=at("2026-11-07 20:00"), notify_me=True)
+    assert toasts == [("F1 Pred: next failed", "Qualifying for 2026 round 20 isn't available yet.")]
+
+
+def test_toast_is_skipped_off_windows(monkeypatch):
+    monkeypatch.setattr(runner.notify.sys, "platform", "linux")
+    runner.notify.toast("t", "b", run=lambda *a, **k: pytest.fail("should not run"))

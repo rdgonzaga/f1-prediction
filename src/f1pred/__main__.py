@@ -48,7 +48,11 @@ def main() -> None:
     p_next.add_argument("--season", type=int, help="Default: this year")
     p_next.add_argument("--wait", type=int, default=0, metavar="MINUTES",
                         help="When predicting, keep retrying every 5 min for up to this long if qualifying isn't out")
+    p_next.add_argument("--penalty", nargs="+", metavar="DRIVER=PLACES", help="Grid place penalties, e.g. VER=5 NOR=3")
+    p_next.add_argument("--pitlane", nargs="+", metavar="DRIVER", help="Pit lane starters, e.g. STR")
+    p_next.add_argument("--grid", nargs="+", metavar="DRIVER=SLOT", help="Exact starting slots, e.g. RUS=19")
     p_next.add_argument("--publish", action="store_true", help="Commit and push site/ afterwards (only on main)")
+    p_next.add_argument("--notify", action="store_true", help="Windows toast when a step finishes or fails")
     p_next.add_argument("--log", metavar="PATH", help="Append all output to this file, for scheduled runs")
 
     p_report = sub.add_parser("report", help="Build a shareable HTML page from a saved prediction")
@@ -134,8 +138,10 @@ def main() -> None:
                     wait_minutes=args.wait, slots=predict.parse_penalties(args.grid))
 
     if args.command == "next":
-        from f1pred import runner
-        runner.run(args.season, args.wait, publish_site=args.publish, log=args.log)
+        from f1pred import predict, runner
+        runner.run(args.season, args.wait, publish_site=args.publish, log=args.log,
+                   penalties=predict.parse_penalties(args.penalty), pitlane=args.pitlane,
+                   slots=predict.parse_penalties(args.grid), notify_me=args.notify)
 
     if args.command == "market":
         from f1pred import market

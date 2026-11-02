@@ -34,11 +34,12 @@ tally is in `data/processed/predictions/scorecard.csv`.
 The short version: double-click `next.bat`, or run `python -m f1pred next`. It looks at the
 schedule and does whatever's due: predicts after qualifying, predicts again once the official
 grid is out, and scores after the race. If nothing's due it tells you the next session. Add
-`--publish` to commit and push `site/` too (only on `main`).
+`--publish` to commit and push `site/` too (only on `main`). `--penalty`, `--pitlane` and `--grid`
+work the same as on `predict`; given after the race is already predicted, they predict it again.
 
 To skip the clicking, `scripts/schedule-next.ps1` sets up a Windows task that runs
-`next --publish` every hour in the background, logging to `data/next.log`. Outside a race weekend
-it just exits. `scripts/schedule-next.ps1 -Remove` takes it off again.
+`next --publish --notify` every hour in the background, logging to `data/next.log`. `--notify`
+pops a Windows toast when a step finishes or fails. Outside a race weekend it just exits. `scripts/schedule-next.ps1 -Remove` takes it off again.
 
 The rest of this section is what it runs under the hood.
 
@@ -68,7 +69,8 @@ fuzzy-matched and can quietly land on the wrong event.
 
 Once the race is over, `python -m f1pred score --refresh` tells you how it did and updates
 `scorecard.csv`. Run `python -m f1pred market 2026` before it to save Polymarket's winner odds from
-an hour before the start; `score` then puts the market's winner log loss next to ours. Prices stay
+an hour before the start; `score` then puts the market's winner log loss next to ours, and the
+site shows both on each race page and the scorecard. Prices stay
 up after the race, so it can catch up on any round you missed.
 
 **The starting grid is fetched for you.** Penalties never appear in the timing data (Antonelli's

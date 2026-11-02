@@ -1,4 +1,4 @@
-# Runs `f1pred next --publish` every hour in the background. -Remove takes it off again.
+# Runs `f1pred next --publish --notify` every hour in the background. -Remove takes it off again.
 param([switch]$Remove)
 
 $name = "f1pred next"
@@ -13,7 +13,7 @@ $python = Join-Path $root ".venv\Scripts\pythonw.exe"
 $log = Join-Path $root "data\next.log"
 if (-not (Test-Path $python)) { throw "No $python; set up the .venv first." }
 
-$action = New-ScheduledTaskAction -Execute $python -Argument "-m f1pred next --publish --log `"$log`"" -WorkingDirectory $root
+$action = New-ScheduledTaskAction -Execute $python -Argument "-m f1pred next --publish --notify --log `"$log`"" -WorkingDirectory $root
 $start = (Get-Date).Date.AddHours((Get-Date).Hour + 1)
 $trigger = New-ScheduledTaskTrigger -Once -At $start -RepetitionInterval (New-TimeSpan -Hours 1)
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `

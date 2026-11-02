@@ -2,6 +2,7 @@
 {% from "_hero.html" import podium, verdict %}
 {% from "_tower.html" import tower, field_table %}
 {% block title %}{{ race.name }} {{ race.season }}{% endblock %}
+{% block og_description %}Predicted podium: {% for row in race.podium %}{{ row.code }} {{ row.win|pct(0) }}%{% if not loop.last %}, {% endif %}{% endfor %}.{% if race.verdict %} {{ race.verdict.lines[0] }}.{% endif %}{% endblock %}
 {% block content %}
 <header class="race-head">
   <p class="eyebrow"><span>Round {{ race.rnd }} · {{ race.season }} season</span></p>
@@ -14,6 +15,7 @@
 </header>
 {{ podium(race) }}
 {{ verdict(race) }}
+{% if race.market_line %}<p class="market-line">{{ race.market_line }}</p>{% endif %}
 
 <div class="tabs" role="tablist" data-tabs>
   {% if not race.pending %}<button type="button" role="tab" aria-controls="tab-result">Result vs prediction</button>{% endif %}

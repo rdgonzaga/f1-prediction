@@ -14,7 +14,7 @@ PAD = 64
 
 
 def _font(weight: str, size: int) -> ImageFont.FreeTypeFont:
-    return ImageFont.truetype(str(FONTS / f"SpaceGrotesk-{weight}.ttf"), size)
+    return ImageFont.truetype(str(FONTS / f"ChakraPetch-{weight}.ttf"), size)
 
 
 def _fit(draw: ImageDraw.ImageDraw, text: str, weight: str, size: int, width: int) -> ImageFont.FreeTypeFont:

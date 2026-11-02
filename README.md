@@ -56,7 +56,9 @@ Use the round number rather than the race name. A number is used as-is, while a 
 fuzzy-matched and can quietly land on the wrong event.
 
 Once the race is over, `python -m f1pred score --refresh` tells you how it did and updates
-`scorecard.csv`.
+`scorecard.csv`. Run `python -m f1pred market 2026` before it to save Polymarket's winner odds from
+an hour before the start; `score` then puts the market's winner log loss next to ours. Prices stay
+up after the race, so it can catch up on any round you missed.
 
 **Grid penalties you have to enter yourself:**
 
@@ -158,7 +160,7 @@ kernel.
 
 ```
 src/f1pred/   fetch, build, features, model, evaluate, probabilities, dnf, predict, report,
-              score, season, weekend, plotting
+              score, market, season, weekend, plotting
   web/        the website: page data, SVG charts, Jinja templates and CSS
 tests/        one test file per module, plus leakage checks in test_features.py
 notebooks/    exploration and review only

@@ -100,7 +100,7 @@ def upcoming(sess: pd.DataFrame, now: pd.Timestamp) -> str:
     return f"Next up: {nxt['EventName']} {nxt['Session']}, {manila(nxt['At'])}."
 
 
-def plan(sess: pd.DataFrame, now: pd.Timestamp, files: Callable[[int], RoundFiles]) -> Step:
+def plan(sess: pd.DataFrame, now: pd.Timestamp, files: Callable[[int], RoundFiles], fixes: bool = False) -> Step:
     started = sess[sess["QualiUTC"] <= now]
     if started.empty:
         return Step("wait", None, f"Nothing due. {upcoming(sess, now)}")
@@ -113,6 +113,8 @@ def plan(sess: pd.DataFrame, now: pd.Timestamp, files: Callable[[int], RoundFile
         f = files(rnd)
         if f.grid_source is None:
             return Step("predict", rnd, f"Predicting {name} from qualifying.")
+        if fixes:
+            return Step("regrid", rnd, f"Re-predicting {name} with your grid fixes.")
         if f.grid_source == "provisional":
             return Step("regrid", rnd, f"{name} was predicted on a provisional grid, checking for the official one.")
         return Step("wait", rnd, f"{name} is predicted. Race starts {manila(race['RaceUTC'])}.")
@@ -152,7 +154,8 @@ def publish(step: Step, event_name: str, run_git: Callable[..., str] = git) -> b
 
 
 def run(season: int | None = None, wait_minutes: int = 0, now: pd.Timestamp | None = None,
-        publish_site: bool = False, log: str | None = None) -> Step:
+        publish_site: bool = False, log: str | None = None, penalties: dict[str, int] | None = None,
+        pitlane: list[str] | None = None, slots: dict[str, int] | None = None) -> Step:
     if log:
         sys.stdout = sys.stderr = open(log, "a", encoding="utf-8", buffering=1)
         print(f"\n[{pd.Timestamp.now():%Y-%m-%d %H:%M}]")
@@ -160,13 +163,17 @@ def run(season: int | None = None, wait_minutes: int = 0, now: pd.Timestamp | No
     now = now or pd.Timestamp.now(tz="UTC")
     scored = scored_rounds()
     sess = sessions(season)
-    step = plan(sess, now, lambda rnd: round_files(season, rnd, scored))
+    fixes = bool(penalties or pitlane or slots)
+    step = plan(sess, now, lambda rnd: round_files(season, rnd, scored), fixes)
     print(step.message)
+    if fixes and step.action not in ("predict", "regrid"):
+        print("Grid fixes not used: nothing is waiting to be predicted.")
 
+    grid = {"penalties": penalties, "pitlane": pitlane, "slots": slots}
     if step.action == "predict":
-        weekend.run(season, str(step.rnd), wait_minutes=wait_minutes)
+        weekend.run(season, str(step.rnd), wait_minutes=wait_minutes, **grid)
     elif step.action == "regrid":
-        predict.run(season, str(step.rnd), refresh=False)
+        predict.run(season, str(step.rnd), refresh=False, **grid)
         report.run(season, step.rnd)
         web.build_site()
     elif step.action == "after_race":

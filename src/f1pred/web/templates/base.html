@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}The odds behind P1{% endblock %} · P(1)</title>
+<title>{% block title %}Race odds, locked after qualifying{% endblock %} · Parc Fermé</title>
 {% set description = "F1 race predictions made after qualifying: finishing order plus win, podium, points and retirement chances." %}
 <meta name="description" content="{{ description }}">
-<meta property="og:site_name" content="P(1)">
+<meta property="og:site_name" content="Parc Fermé">
 <meta name="theme-color" content="#0a0a0d">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{ self.title() }}">
@@ -32,7 +32,7 @@
 <body>
 <header class="topbar">
   <div class="wrap topbar-inner">
-    <a class="brand" href="{{ root }}" aria-label="P(1) home">P<b>(1)</b><span class="brand-tag">the odds behind P1</span></a>
+    <a class="brand" href="{{ root }}" aria-label="Parc Fermé home">PARC<b>FERMÉ</b><span class="brand-tag">odds, locked after qualifying</span></a>
     <nav class="mainnav" aria-label="Main">
       <a href="{{ root }}"{% if active == "home" %} aria-current="page"{% endif %}>Home</a>
       <a href="{{ root }}races/"{% if active == "races" %} aria-current="page"{% endif %}>Races</a>

@@ -108,9 +108,9 @@ def test_each_race_gets_a_share_image_and_preview_tags(built):
     assert "og:image" not in read(built, "drivers/alpha")
 
 
-def test_pages_carry_the_p1_brand_and_home_leads_with_the_record(built):
+def test_pages_carry_the_brand_and_home_leads_with_the_record(built):
     home = read(built, "")
-    assert "· P(1)</title>" in home and 'og:site_name" content="P(1)"' in home
+    assert "· Parc Fermé</title>" in home and 'og:site_name" content="Parc Fermé"' in home
     assert "F1 Pred" not in home and "Titillium" not in home
     assert home.index('class="record"') < home.index('class="hero"')
     from PIL import Image

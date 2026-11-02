@@ -9,7 +9,7 @@ from f1pred.web import data
 
 FONTS = Path(__file__).parent / "fonts"
 SIZE = (1200, 630)
-BG, PANEL, INK, INK_2, INK_3, ACCENT = "#0a0a0d", "#15151b", "#f4f4f6", "#b8b8c4", "#7d7d8b", "#a259ff"
+BG, PANEL, INK, INK_2, INK_3, ACCENT = "#0a0a0d", "#15151b", "#f4f4f6", "#b8b8c4", "#7d7d8b", "#e10600"
 PAD = 64
 
 
@@ -27,19 +27,18 @@ def _fit(draw: ImageDraw.ImageDraw, text: str, weight: str, size: int, width: in
 
 def wordmark(draw: ImageDraw.ImageDraw, at: tuple[int, int], size: int) -> None:
     font = _font("Bold", size)
-    draw.text(at, "P", font=font, fill=INK)
-    draw.text((at[0] + draw.textlength("P", font=font), at[1]), "(1)", font=font, fill=ACCENT)
+    draw.text(at, "PARC", font=font, fill=INK)
+    draw.text((at[0] + draw.textlength("PARC ", font=font), at[1]), "FERMÉ", font=font, fill=ACCENT)
 
 
 def icon(size: int) -> Image.Image:
     img = Image.new("RGB", (size, size), BG)
     draw = ImageDraw.Draw(img)
-    font = _font("Bold", round(size * 0.5))
-    width = draw.textlength("P(1)", font=font)
-    x = (size - width) / 2
+    font = _font("Bold", round(size * 0.62))
+    x = (size - draw.textlength("PF", font=font)) / 2
     y = size / 2
     draw.text((x, y), "P", font=font, fill=INK, anchor="lm")
-    draw.text((x + draw.textlength("P", font=font), y), "(1)", font=font, fill=ACCENT, anchor="lm")
+    draw.text((x + draw.textlength("P", font=font), y), "F", font=font, fill=ACCENT, anchor="lm")
     return img
 
 

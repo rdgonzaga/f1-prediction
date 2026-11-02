@@ -44,6 +44,11 @@ def main() -> None:
     p_week.add_argument("--wait", type=int, default=0, metavar="MINUTES",
                         help="Keep retrying every 5 min for up to this long if qualifying isn't out yet")
 
+    p_next = sub.add_parser("next", help="Run whatever this race weekend needs next (predict, regrid or score)")
+    p_next.add_argument("--season", type=int, help="Default: this year")
+    p_next.add_argument("--wait", type=int, default=0, metavar="MINUTES",
+                        help="When predicting, keep retrying every 5 min for up to this long if qualifying isn't out")
+
     p_report = sub.add_parser("report", help="Build a shareable HTML page from a saved prediction")
     p_report.add_argument("season", type=int)
     p_report.add_argument("round", type=int)
@@ -125,6 +130,10 @@ def main() -> None:
         from f1pred import predict, weekend
         weekend.run(args.season, args.event, penalties=predict.parse_penalties(args.penalty), pitlane=args.pitlane,
                     wait_minutes=args.wait, slots=predict.parse_penalties(args.grid))
+
+    if args.command == "next":
+        from f1pred import runner
+        runner.run(args.season, args.wait)
 
     if args.command == "market":
         from f1pred import market

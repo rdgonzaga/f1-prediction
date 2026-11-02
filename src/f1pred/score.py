@@ -1,9 +1,10 @@
 """Score saved pre-race predictions against actual results."""
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
-from f1pred import build, config, evaluate, fetch
+from f1pred import build, config, evaluate, fetch, market
 
 NON_FINISH_LABELS = {"R": "DNF", "D": "DSQ", "W": "DNS"}
 
@@ -39,7 +40,11 @@ def merge_actual(pred: pd.DataFrame, actual: pd.DataFrame) -> pd.DataFrame | Non
     return None if merged.empty else merged
 
 
-def score_race(pred: pd.DataFrame, actual: pd.DataFrame) -> dict[str, float] | None:
+def winner_log_loss(win_pct: float) -> float:
+    return float(-np.log(max(win_pct / 100, 1e-4)))
+
+
+def score_race(pred: pd.DataFrame, actual: pd.DataFrame, market: pd.DataFrame | None = None) -> dict[str, float] | None:
     merged = merge_actual(pred, actual)
     if merged is None:
         return None
@@ -47,8 +52,14 @@ def score_race(pred: pd.DataFrame, actual: pd.DataFrame) -> dict[str, float] | N
     row = evaluate.race_metrics(merged["FinishPosition"], merged["PredictedPosition"])
     row |= {f"Grid{k}": v for k, v in evaluate.race_metrics(merged["FinishPosition"], merged["Grid"]).items()}
     if "WinPct" in merged:
-        row["WinnerWinPct"] = float(merged.loc[actual_rank.idxmin(), "WinPct"])
+        winner = merged.loc[actual_rank.idxmin()]
+        row["WinnerWinPct"] = float(winner["WinPct"])
+        row["WinnerLogLoss"] = winner_log_loss(winner["WinPct"])
         row["PodiumBrier"] = float(((merged["PodiumPct"] / 100 - (actual_rank <= 3)) ** 2).mean())
+        odds = market.set_index("Abbreviation")["MarketWinPct"] if market is not None else {}
+        if winner["Abbreviation"] in odds:
+            row["MarketWinnerWinPct"] = float(odds[winner["Abbreviation"]])
+            row["MarketWinnerLogLoss"] = winner_log_loss(odds[winner["Abbreviation"]])
     return row
 
 
@@ -73,7 +84,7 @@ def run(season: int | None = None, refresh: bool = False, include_backfilled: bo
             skipped.append(f"{label}: made after the race (use --include-backfilled)")
             continue
         actual = entries[(entries["Season"] == s) & (entries["RoundNumber"] == rnd)]
-        row = score_race(pred, actual)
+        row = score_race(pred, actual, market.load_market(s, rnd))
         if row is None:
             skipped.append(f"{label}: no full race result yet")
             continue
@@ -94,4 +105,8 @@ def run(season: int | None = None, refresh: bool = False, include_backfilled: bo
     if "WinnerWinPct" in card:
         print(f"\nAvg win chance given to the actual winner: {card['WinnerWinPct'].mean():.1f}%")
         print(f"Podium Brier: {card['PodiumBrier'].mean():.3f}")
+    if "MarketWinnerLogLoss" in card:
+        both = card.dropna(subset=["MarketWinnerLogLoss"])
+        print(f"Winner log loss on the {len(both)} race(s) with market odds: "
+              f"model {both['WinnerLogLoss'].mean():.3f}, Polymarket {both['MarketWinnerLogLoss'].mean():.3f}")
     return card

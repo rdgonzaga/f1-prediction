@@ -53,7 +53,12 @@ def main() -> None:
 
     sub.add_parser("site", help="Build the static website from every saved prediction into site/")
 
-    p_score = sub.add_parser("score", help="Score saved predictions against race results")
+    p_market = sub.add_parser("market", help="Save Polymarket winner odds from an hour before each race")
+    p_market.add_argument("season", type=int)
+    p_market.add_argument("--rounds", type=int, nargs="+", help="Only these round numbers")
+    p_market.add_argument("--refresh", action="store_true", help="Re-download rounds already saved")
+
+    p_score = sub.add_parser("score",help="Score saved predictions against race results")
     p_score.add_argument("--season", type=int)
     p_score.add_argument("--refresh", action="store_true", help="Fetch results for predicted races first")
     p_score.add_argument("--include-backfilled", action="store_true", help="Also score predictions made after the race")
@@ -100,11 +105,13 @@ def main() -> None:
 
             from f1pred import probabilities
             indices = evaluate.season_race_indices(feats, season, args.start_round)
+            done = feats.loc[feats["FinishPosition"].notna() & (feats["RaceIdx"] < indices[0]), "RaceIdx"]
+            warmup = [int(i) for i in sorted(done.unique()) if i >= 3][-probabilities.CALIBRATION_WINDOW:]
             table = {}
             sets = {n: FEATURE_SETS[n] for n in args.features} if args.features else {"default": FEATURES}
             for name, features in sets.items():
-                races = list(evaluate.walk_forward(feats, indices, features))
-                table[name] = probabilities.walk_forward_calibration(races, feats)
+                races = list(evaluate.walk_forward(feats, warmup + indices, features))
+                table[name] = probabilities.walk_forward_calibration(races, feats, warmup=len(warmup))
             print("\nProbability calibration (walk-forward):")
             print(pd.DataFrame(table).round(3).to_string())
 
@@ -118,6 +125,10 @@ def main() -> None:
         from f1pred import predict, weekend
         weekend.run(args.season, args.event, penalties=predict.parse_penalties(args.penalty), pitlane=args.pitlane,
                     wait_minutes=args.wait, slots=predict.parse_penalties(args.grid))
+
+    if args.command == "market":
+        from f1pred import market
+        market.run(args.season, args.rounds, args.refresh)
 
     if args.command == "fetch":
         from f1pred import fetch

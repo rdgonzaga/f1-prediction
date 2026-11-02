@@ -18,7 +18,7 @@ came out worse.
 The percentages are the real output, and a starting grid can't give you those. The grid tells you
 Norris starts first. It can't tell you he's 31% to win, or that Stroll has a 33% chance of not
 finishing. Those numbers hold up against races that already happened: across 2025 the eventual
-winner scored 1.11 on log loss, against 2.99 for treating every driver as equally likely.
+winner scored 1.04 on log loss, against 2.99 for treating every driver as equally likely.
 
 The retirement estimate is the weak one. Over 2025 it scores exactly the same as just using the
 field's recent failure rate (0.090 Brier each), so no better. It only pulls ahead in 2026 (0.144
@@ -56,7 +56,9 @@ Use the round number rather than the race name. A number is used as-is, while a 
 fuzzy-matched and can quietly land on the wrong event.
 
 Once the race is over, `python -m f1pred score --refresh` tells you how it did and updates
-`scorecard.csv`.
+`scorecard.csv`. Run `python -m f1pred market 2026` before it to save Polymarket's winner odds from
+an hour before the start; `score` then puts the market's winner log loss next to ours. Prices stay
+up after the race, so it can catch up on any round you missed.
 
 **Grid penalties you have to enter yourself:**
 
@@ -158,7 +160,7 @@ kernel.
 
 ```
 src/f1pred/   fetch, build, features, model, evaluate, probabilities, dnf, predict, report,
-              score, season, weekend, plotting
+              score, market, season, weekend, plotting
   web/        the website: page data, SVG charts, Jinja templates and CSS
 tests/        one test file per module, plus leakage checks in test_features.py
 notebooks/    exploration and review only

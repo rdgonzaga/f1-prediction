@@ -42,3 +42,13 @@ def test_fit_temperature_recovers_noise_level():
         finish = pb.simulate_positions(scores, temperature=2.0, n_sims=1, seed=i)[0]
         races.append(pd.DataFrame({"Score": scores, "FinishPosition": finish.astype(float)}))
     assert 1.4 < pb.fit_temperature(races) < 2.9
+
+
+def test_rolling_probabilities_skips_warmup_and_fits_on_recent_window(monkeypatch):
+    seen = []
+    monkeypatch.setattr(pb, "fit_temperature", lambda races, *a, **k: seen.append(len(races)) or 1.0)
+    races = [pd.DataFrame({"Score": [1.0, 0.0], "FinishPosition": [1.0, 2.0], "RaceIdx": [i, i]})
+             for i in range(pb.CALIBRATION_WINDOW + 3)]
+    out = pb.rolling_probabilities(races, n_sims=100, warmup=3)
+    assert [int(r["RaceIdx"].iloc[0]) for r in out] == list(range(3, len(races)))
+    assert seen[-1] == pb.CALIBRATION_WINDOW

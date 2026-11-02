@@ -18,7 +18,7 @@ came out worse.
 The percentages are the real output, and a starting grid can't give you those. The grid tells you
 Norris starts first. It can't tell you he's 31% to win, or that Stroll has a 33% chance of not
 finishing. Those numbers hold up against races that already happened: across 2025 the eventual
-winner scored 1.11 on log loss, against 2.99 for treating every driver as equally likely.
+winner scored 1.04 on log loss, against 2.99 for treating every driver as equally likely.
 
 The retirement estimate is the weak one. Over 2025 it scores exactly the same as just using the
 field's recent failure rate (0.090 Brier each), so no better. It only pulls ahead in 2026 (0.144

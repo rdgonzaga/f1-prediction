@@ -53,6 +53,8 @@ def build_site(out_dir: Path | None = None,
     staging = out_dir.with_name(out_dir.name + ".new")
     shutil.rmtree(staging, ignore_errors=True)
     shutil.copytree(STATIC_DIR, staging / "static")
+    share.icon(32).save(staging / "static" / "favicon-32.png")
+    share.icon(180).save(staging / "static" / "apple-touch-icon.png")
 
     def page(rel: str, template: str, root: str, **context) -> None:
         _write(staging, rel, render_page(env, template, root, site=site, **context))

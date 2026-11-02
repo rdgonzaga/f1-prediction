@@ -106,3 +106,13 @@ def test_each_race_gets_a_share_image_and_preview_tags(built):
     assert 'content="Predicted podium: A 50%, B 30%, C 15%. A won as favourite at 50%."' in page
     assert f'og:image" content="{web.SITE_URL}2026/round-03/share.png"' in read(built, "")
     assert "og:image" not in read(built, "drivers/alpha")
+
+
+def test_pages_carry_the_p1_brand_and_home_leads_with_the_record(built):
+    home = read(built, "")
+    assert "· P(1)</title>" in home and 'og:site_name" content="P(1)"' in home
+    assert "F1 Pred" not in home and "Titillium" not in home
+    assert home.index('class="record"') < home.index('class="hero"')
+    from PIL import Image
+    with Image.open(built / "static" / "apple-touch-icon.png") as img:
+        assert img.size == (180, 180)

@@ -79,3 +79,13 @@ def test_pull_does_nothing_without_a_branch_or_new_files(tmp_path, monkeypatch):
     run_git, calls = fake_git(files="")
     assert databranch.pull(run_git) == []
     assert "checkout-index" not in names(calls)
+
+
+def test_git_hides_the_console_window(monkeypatch):
+    seen = []
+    monkeypatch.setattr(databranch.subprocess, "run",
+                        lambda *a, **kw: seen.append(kw["creationflags"]) or subprocess.CompletedProcess(a, 0, ""))
+    databranch.git("status")
+    from f1pred import runner
+    runner.git("status")
+    assert seen == [databranch.NO_WINDOW] * 2

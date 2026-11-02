@@ -3,10 +3,22 @@
 {% from "_card.html" import season_cards %}
 {% block content %}
 {% set race = site.current.latest %}
+{% set sc = site.scorecard_season %}
+{% if sc %}
+{% set m = sc.scorecard.market %}
+<section class="record" aria-label="Track record">
+  <a class="stat" href="{{ root }}{{ sc.scorecard_path }}"><b>{{ sc.picks_right }}/{{ sc.scored|length }}</b><span>winners picked in {{ sc.year }}</span></a>
+  {% if m %}
+  <a class="stat" href="{{ root }}{{ sc.scorecard_path }}"><b{% if m.model_better %} class="hi"{% endif %}>{{ m.model_pct|pct(0) }}%</b><span>average chance given to the winner, Polymarket {{ m.market_pct|pct(0) }}%</span></a>
+  {% endif %}
+  <a class="stat" href="{{ root }}{{ sc.scorecard_path }}"><b>{{ sc.scorecard.beat }}/{{ sc.scorecard.races|length }}</b><span>races where its order beat plain grid order</span></a>
+</section>
+{% endif %}
+
 <section class="hero">
   <p class="eyebrow">{% if race.live %}<span class="badge-live">LIVE</span>{% endif %}<span>Latest · Round {{ race.rnd }} · {{ race.season }}</span></p>
   <h1><a href="{{ root }}{{ race.path }}">{{ race.name }}</a></h1>
-  <p class="lede">Every race is predicted once qualifying is done: the likely podium, and each driver's chance to win. <a href="{{ root }}how-it-works/">How it works</a></p>
+  <p class="lede">The odds behind P1. Every race is predicted once qualifying is done: the likely podium, and each driver's chance to win, checked against the result and the betting market. <a href="{{ root }}how-it-works/">How it works</a></p>
   {{ podium(race) }}
   {{ verdict(race) }}
   <p class="more"><a href="{{ root }}{{ race.path }}">Full timing tower →</a></p>
@@ -15,12 +27,4 @@
 <h2 class="section-title">{{ site.current.year }} season</h2>
 {{ season_cards(site.current, root) }}
 
-{% set sc = site.scorecard_season %}
-{% if sc %}
-<section class="teaser">
-  <p class="teaser-head"><span class="big">{{ sc.picks_right }}/{{ sc.scored|length }}</span> winners picked in {{ sc.year }}</p>
-  <p>The model's order beat plain grid order in {{ sc.scorecard.beat }} of {{ sc.scorecard.races|length }} races. The percentages are what it adds.</p>
-  <a class="btn" href="{{ root }}{{ sc.scorecard_path }}">Season scorecard →</a>
-</section>
-{% endif %}
 {% endblock %}

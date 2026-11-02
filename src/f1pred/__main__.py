@@ -100,11 +100,13 @@ def main() -> None:
 
             from f1pred import probabilities
             indices = evaluate.season_race_indices(feats, season, args.start_round)
+            done = feats.loc[feats["FinishPosition"].notna() & (feats["RaceIdx"] < indices[0]), "RaceIdx"]
+            warmup = [int(i) for i in sorted(done.unique()) if i >= 3][-probabilities.CALIBRATION_WINDOW:]
             table = {}
             sets = {n: FEATURE_SETS[n] for n in args.features} if args.features else {"default": FEATURES}
             for name, features in sets.items():
-                races = list(evaluate.walk_forward(feats, indices, features))
-                table[name] = probabilities.walk_forward_calibration(races, feats)
+                races = list(evaluate.walk_forward(feats, warmup + indices, features))
+                table[name] = probabilities.walk_forward_calibration(races, feats, warmup=len(warmup))
             print("\nProbability calibration (walk-forward):")
             print(pd.DataFrame(table).round(3).to_string())
 

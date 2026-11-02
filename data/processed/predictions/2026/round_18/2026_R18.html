@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>United States Grand Prix 2026 · F1 Pred</title>
+<meta name="description" content="F1 race predictions made after qualifying: finishing order plus win, podium, points and retirement chances.">
+<script>document.documentElement.classList.add("js")</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Titillium+Web:wght@400;600;700;900&display=swap">
+<style>:root {
+  --bg: #0a0a0d;
+  --panel: #15151b;
+  --panel-2: #1d1d26;
+  --line: #2a2a34;
+  --line-2: #3b3b48;
+  --ink: #f4f4f6;
+  --ink-2: #b8b8c4;
+  --ink-3: #7d7d8b;
+  --red: #e10600;
+  --up: #34d27b;
+  --down: #ff5a4e;
+  --sans: "Titillium Web", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.5; }
+a { color: inherit; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-left: 16px; padding-right: 16px; }
+main.wrap { padding-top: 28px; padding-bottom: 56px; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--ink-3); }
+
+.topbar { background: #000; border-bottom: 3px solid var(--red); }
+.topbar-inner { display: flex; align-items: center; gap: 24px; min-height: 54px; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 20px; letter-spacing: .02em; text-decoration: none; white-space: nowrap; }
+.brand b { color: var(--red); font-weight: 900; }
+.brand-mark { width: 14px; height: 14px; background: var(--red); transform: skewX(-20deg); }
+.mainnav { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.mainnav a { padding: 15px 10px 12px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); text-decoration: none; white-space: nowrap; border-bottom: 3px solid transparent; }
+.mainnav a:hover { color: var(--ink); }
+.mainnav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink); }
+
+h1 { font-weight: 900; font-size: clamp(34px, 7vw, 58px); line-height: 1; text-transform: uppercase; letter-spacing: -.01em; margin: 8px 0 0; text-wrap: balance; }
+h1 a { text-decoration: none; }
+h1 a:hover { color: #fff; }
+.section-title { display: flex; align-items: center; gap: 12px; margin: 44px 0 16px; font-weight: 700; font-size: 18px; text-transform: uppercase; letter-spacing: .06em; }
+.section-title::before { content: ""; width: 4px; height: 18px; background: var(--red); }
+.eyebrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0; color: var(--ink-3); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
+.lede { color: var(--ink-2); max-width: 62ch; margin: 12px 0 0; }
+.lede a, .more a, .prose a, .note a { color: var(--ink); text-decoration-color: var(--red); text-underline-offset: 3px; }
+.badge-live { display: inline-block; background: var(--red); color: #fff; font-weight: 700; font-size: 11px; letter-spacing: .1em; line-height: 1.6; padding: 0 7px; border-radius: 2px; }
+.badge-after { border: 1px solid var(--line-2); color: var(--ink-2); font-weight: 600; font-size: 12px; padding: 1px 8px; border-radius: 2px; }
+.race-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 14px 0 0; color: var(--ink-2); font-size: 14px; }
+.made { color: var(--ink-3); font-family: var(--mono); font-size: 12px; }
+
+.podium { display: grid; grid-template-columns: 1fr 1.25fr 1fr; grid-template-areas: "p2 p1 p3"; align-items: end; gap: 10px; margin-top: 24px; }
+.pod { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 14px 16px 16px; background: var(--panel); border-top: 4px solid var(--team); overflow: hidden; }
+.pod::before { content: ""; position: absolute; inset: 0; background: linear-gradient(160deg, color-mix(in srgb, var(--team) 24%, transparent), transparent 62%); }
+.pod > * { position: relative; }
+.pod-1 { grid-area: p1; padding-block: 22px 24px; }
+.pod-2 { grid-area: p2; }
+.pod-3 { grid-area: p3; }
+.pod-pos { font-family: var(--mono); font-weight: 700; font-size: 13px; color: var(--ink-3); }
+.pod-code { font-weight: 900; font-size: 40px; line-height: 1; letter-spacing: .02em; }
+.pod-1 .pod-code { font-size: 64px; }
+.pod-team { color: var(--ink-2); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pod-win { margin-top: 10px; color: var(--ink-2); font-size: 14px; }
+.pod-win b { font-family: var(--mono); font-size: 22px; color: var(--ink); }
+.pod-1 .pod-win b { font-size: 30px; }
+.pod-fin { margin-top: 2px; color: var(--ink-3); font-size: 13px; }
+
+.verdict { display: flex; flex-wrap: wrap; gap: 4px 0; margin: 12px 0 0; padding: 12px 16px; background: var(--panel); border-left: 4px solid var(--red); font-weight: 600; }
+.verdict span + span::before { content: "·"; color: var(--ink-3); margin: 0 10px; }
+.verdict.pending { color: var(--ink-2); border-left-color: var(--line-2); }
+.more { margin: 14px 0 0; font-weight: 600; }
+
+.tabs { display: none; gap: 2px; margin: 40px 0 0; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.js .tabs { display: flex; }
+.tabs button { background: none; border: 0; border-bottom: 3px solid transparent; color: var(--ink-3); font: 700 14px var(--sans); text-transform: uppercase; letter-spacing: .06em; padding: 12px 14px 9px; cursor: pointer; white-space: nowrap; }
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--red); }
+.js .panel { margin-top: 20px; }
+.js .panel > .section-title { display: none; }
+
+.scroller { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th { padding: 0 10px 8px; border-bottom: 1px solid var(--line-2); color: var(--ink-3); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; text-align: right; white-space: nowrap; }
+td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th.l, td.l { text-align: left; }
+th.c { text-align: center; }
+.tower { max-width: 720px; }
+tbody tr:nth-child(odd) { background: var(--panel); }
+tbody tr:hover { background: var(--panel-2); }
+td a { text-decoration: none; }
+td a:hover { text-decoration: underline; text-decoration-color: var(--red); }
+td.pos { width: 40px; color: var(--ink-3); font-family: var(--mono); }
+td.stripe { width: 4px; padding: 0; }
+td.stripe i { display: block; width: 4px; height: 24px; background: var(--team); }
+td.drv { text-align: left; font-weight: 700; font-size: 17px; letter-spacing: .02em; }
+.drv-team { display: block; color: var(--ink-3); font-weight: 400; font-size: 12px; letter-spacing: 0; line-height: 1.2; }
+td.team { color: var(--ink-3); font-size: 14px; }
+td.win { font-weight: 700; }
+td.fin { font-weight: 700; }
+.out { color: var(--down); font-family: var(--mono); font-weight: 700; font-size: 12px; letter-spacing: .04em; }
+.hit { color: var(--up); font-weight: 700; margin-left: 6px; }
+.miss { color: var(--ink-3); margin-left: 6px; }
+td.delta .hit { margin-left: 0; }
+.up { color: var(--up); font-family: var(--mono); font-size: 13px; }
+.down { color: var(--down); font-family: var(--mono); font-size: 13px; }
+.move { color: var(--ink-3); font-size: 12px; margin-left: 4px; }
+.risk { color: var(--down); font-weight: 700; }
+td.better { color: var(--up); font-weight: 700; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.card { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px 16px; background: var(--panel); border-top: 4px solid var(--team, var(--line-2)); text-decoration: none; transition: background 150ms ease; }
+a.card:hover { background: var(--panel-2); }
+.card-top { display: flex; align-items: center; gap: 8px; color: var(--ink-3); font-family: var(--mono); font-size: 12px; }
+.card-name { margin-bottom: 8px; font-weight: 900; font-size: 22px; line-height: 1.1; text-transform: uppercase; }
+.card-line { display: flex; align-items: baseline; gap: 8px; color: var(--ink-2); font-size: 14px; }
+.card-line .lbl { width: 56px; flex: none; color: var(--ink-3); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.card-line b { color: var(--ink); }
+.card-next { opacity: .5; border-top-style: dashed; }
+
+.teaser { display: grid; gap: 6px; margin-top: 44px; padding: 20px; background: var(--panel); border-left: 4px solid var(--red); }
+.teaser p { margin: 0; color: var(--ink-2); }
+.teaser-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; font-size: 20px; font-weight: 600; }
+.big { color: var(--ink); font-family: var(--mono); font-weight: 700; font-size: 48px; line-height: 1; }
+.btn { justify-self: start; margin-top: 10px; padding: 10px 16px; background: var(--red); color: #fff; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; text-decoration: none; }
+.btn:hover { background: #ff1e14; }
+
+svg.chart { display: block; width: 100%; max-width: 720px; height: auto; }
+svg .gridline { stroke: var(--line); stroke-width: 1; }
+svg .axis { fill: var(--ink-3); font: 12px var(--mono); }
+svg .code { fill: var(--ink); font: 700 16px var(--sans); }
+svg .val { font: 700 12px var(--mono); }
+svg .label { fill: var(--ink-2); font: 600 14px var(--sans); }
+svg .live { fill: var(--red); font: 700 11px var(--mono); }
+svg .link { stroke: var(--line-2); stroke-width: 2; }
+svg .model { fill: var(--red); stroke: var(--bg); stroke-width: 2; }
+svg .gridpt { fill: var(--bg); stroke: var(--ink-3); stroke-width: 2; }
+svg .said { fill: var(--ink-3); fill-opacity: .45; }
+svg .did { fill: var(--ink); }
+svg .pred { fill: none; stroke: var(--ink-3); stroke-width: 2; stroke-dasharray: 4 4; }
+svg .act { fill: none; stroke-width: 3; stroke-linejoin: round; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 12px; color: var(--ink-3); font-size: 13px; }
+.legend i { display: inline-block; width: 18px; height: 10px; margin-right: 6px; vertical-align: middle; background: var(--ink-2); }
+.legend i.soft { opacity: .3; }
+.legend i.dot-model { width: 10px; border-radius: 50%; background: var(--red); }
+.legend i.dot-grid { width: 10px; border-radius: 50%; background: none; border: 2px solid var(--ink-3); }
+.legend i.said { background: var(--ink-3); opacity: .45; }
+.legend i.did { background: var(--ink); }
+.legend i.line-pred { height: 0; background: none; border-top: 2px dashed var(--ink-3); }
+.legend i.line-act { height: 3px; background: var(--team, var(--ink)); }
+
+.driver-head { padding: 24px 20px; background: linear-gradient(110deg, color-mix(in srgb, var(--team) 32%, var(--panel)), var(--panel) 70%); border-left: 6px solid var(--team); }
+.driver-head .eyebrow { color: var(--ink-2); }
+.driver-code { margin: 6px 0 0; color: var(--ink-2); font-family: var(--mono); font-weight: 700; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
+.stat { padding: 14px 16px; background: var(--panel); }
+.stat b { display: block; font-family: var(--mono); font-weight: 700; font-size: 28px; line-height: 1.2; }
+.stat span { color: var(--ink-3); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 28px; }
+.team-block { padding: 14px 16px; background: var(--panel); border-left: 4px solid var(--team); }
+.team-block h2 { margin: 0 0 6px; font-size: 16px; text-transform: uppercase; letter-spacing: .06em; }
+.driver-list { list-style: none; margin: 0; padding: 0; }
+.driver-list a { display: flex; gap: 12px; padding: 5px 0; color: var(--ink-2); text-decoration: none; }
+.driver-list a:hover { color: var(--ink); }
+.driver-list b { width: 3.5ch; color: var(--ink); font-family: var(--mono); }
+
+.prose { max-width: 66ch; }
+.prose h2 { margin: 32px 0 8px; font-size: 20px; text-transform: uppercase; letter-spacing: .04em; }
+.prose p { color: var(--ink-2); }
+.note { max-width: 66ch; margin-top: 40px; color: var(--ink-2); font-size: 15px; }
+.note strong { color: var(--ink); }
+.pager { display: flex; justify-content: space-between; gap: 12px; margin-top: 32px; }
+.pager a { color: var(--ink-2); font-weight: 600; text-decoration: none; }
+.pager a:hover { color: var(--ink); }
+.race-notes { margin-top: 24px; color: var(--ink-3); font-size: 13px; }
+.race-notes p { margin: 0 0 4px; }
+.race-notes .warn { color: var(--down); }
+.sitefoot { padding-top: 18px; padding-bottom: 40px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: 13px; }
+.sitefoot a { color: var(--ink-2); }
+
+@media (max-width: 640px) {
+  .topbar-inner { flex-wrap: wrap; gap: 0; padding-top: 10px; }
+  .mainnav { width: calc(100% + 20px); margin-left: -10px; }
+  .mainnav a { padding: 10px 7px; font-size: 12px; letter-spacing: .03em; }
+  .tabs button { padding: 10px 9px 8px; font-size: 12px; letter-spacing: .03em; }
+  .podium { grid-template-columns: 1fr 1fr; grid-template-areas: "p1 p1" "p2 p3"; }
+  .pod-code { font-size: 30px; }
+  .pod-1 .pod-code { font-size: 52px; }
+  .verdict { flex-direction: column; }
+  .verdict span + span::before { content: none; }
+  .cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .card { padding: 12px; }
+  .card-name { font-size: 17px; }
+  .card-line .lbl { width: 46px; }
+  td, th { padding-left: 6px; padding-right: 6px; }
+  .hide-sm { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="https://rdgonzaga.github.io/f1-prediction/"><span class="brand-mark"></span>F1<b>PRED</b></a>
+    <nav class="mainnav" aria-label="Main">
+      <a href="https://rdgonzaga.github.io/f1-prediction/">Home</a>
+      <a href="https://rdgonzaga.github.io/f1-prediction/races/" aria-current="page">Races</a>
+      <a href="https://rdgonzaga.github.io/f1-prediction/drivers/">Drivers</a>
+      <a href="https://rdgonzaga.github.io/f1-prediction/2026/scorecard/">Scorecard</a>
+      <a href="https://rdgonzaga.github.io/f1-prediction/how-it-works/">How it works</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<header class="race-head">
+  <p class="eyebrow"><span>Round 18 · 2026 season</span></p>
+  <h1>United States Grand Prix</h1>
+  <p class="race-meta">
+<span class="badge-live">LIVE</span><span>Predicted before the race</span>
+<span class="made">Mon 26 Oct 2026, 02:54 UTC · 10:54 Manila</span>  </p>
+</header>
+<section class="podium" aria-label="Predicted podium">
+  <div class="pod pod-1" style="--team: #27f4d2">
+    <span class="pod-pos">P1</span>
+    <span class="pod-code">ANT</span>
+    <span class="pod-team">Mercedes</span>
+    <span class="pod-win"><b>44%</b> to win</span>
+    <span class="pod-fin">Finished 1st</span>
+  </div>
+  <div class="pod pod-2" style="--team: #ef4c63">
+    <span class="pod-pos">P2</span>
+    <span class="pod-code">LEC</span>
+    <span class="pod-team">Ferrari</span>
+    <span class="pod-win"><b>22%</b> to win</span>
+    <span class="pod-fin">Finished 2nd</span>
+  </div>
+  <div class="pod pod-3" style="--team: #8582f7">
+    <span class="pod-pos">P3</span>
+    <span class="pod-code">VER</span>
+    <span class="pod-team">Red Bull Racing</span>
+    <span class="pod-win"><b>21%</b> to win</span>
+    <span class="pod-fin">Finished 3rd</span>
+  </div>
+</section>
+
+<p class="verdict"><span>ANT won as favourite at 44%</span><span>3 of 3 podium spots called</span><span>Biggest surprise: STR, 20th to 15th</span></p>
+
+
+<div class="tabs" role="tablist" data-tabs>
+<button type="button" role="tab" aria-controls="tab-result">Result vs prediction</button>  <button type="button" role="tab" aria-controls="tab-chances">Chances</button>
+  <button type="button" role="tab" aria-controls="tab-field">Full field</button>
+</div>
+<section class="panel" id="tab-result" role="tabpanel">
+  <h2 class="section-title">Result vs prediction</h2>
+  <div class="scroller">
+<table class="tower">
+<thead><tr><th>Pred</th><th></th><th class="l">Driver</th><th>Win</th><th>Finish</th><th class="l"></th></tr></thead>
+<tbody>
+<tr>
+  <td class="pos">1</td>
+  <td class="stripe" style="--team: #27f4d2"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/antonelli/">ANT</a><span class="drv-team">Mercedes</span></td>
+  <td class="num">44.4%</td>
+  <td class="num fin">1</td>
+  <td class="l delta">
+<span class="hit" title="Exact">✓</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">2</td>
+  <td class="stripe" style="--team: #ef4c63"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/leclerc/">LEC</a><span class="drv-team">Ferrari</span></td>
+  <td class="num">21.9%</td>
+  <td class="num fin">2</td>
+  <td class="l delta">
+<span class="hit" title="Exact">✓</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">3</td>
+  <td class="stripe" style="--team: #8582f7"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/max_verstappen/">VER</a><span class="drv-team">Red Bull Racing</span></td>
+  <td class="num">21.4%</td>
+  <td class="num fin">3</td>
+  <td class="l delta">
+<span class="hit" title="Exact">✓</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">4</td>
+  <td class="stripe" style="--team: #ef4c63"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/hamilton/">HAM</a><span class="drv-team">Ferrari</span></td>
+  <td class="num">5.2%</td>
+  <td class="num fin">4</td>
+  <td class="l delta">
+<span class="hit" title="Exact">✓</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">5</td>
+  <td class="stripe" style="--team: #8582f7"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/hadjar/">HAD</a><span class="drv-team">Red Bull Racing</span></td>
+  <td class="num">3.4%</td>
+  <td class="num fin">6</td>
+  <td class="l delta">
+<span class="down">▼1</span>  </td>
+</tr>
+<tr>
+  <td class="pos">6</td>
+  <td class="stripe" style="--team: #27f4d2"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/russell/">RUS</a><span class="drv-team">Mercedes</span></td>
+  <td class="num">1.6%</td>
+  <td class="num fin">8</td>
+  <td class="l delta">
+<span class="down">▼2</span>  </td>
+</tr>
+<tr>
+  <td class="pos">7</td>
+  <td class="stripe" style="--team: #ff8000"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/piastri/">PIA</a><span class="drv-team">McLaren</span></td>
+  <td class="num">0.9%</td>
+  <td class="num fin">7</td>
+  <td class="l delta">
+<span class="hit" title="Exact">✓</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">8</td>
+  <td class="stripe" style="--team: #ff8000"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/norris/">NOR</a><span class="drv-team">McLaren</span></td>
+  <td class="num">0.6%</td>
+  <td class="num fin">5</td>
+  <td class="l delta">
+<span class="up">▲3</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">9</td>
+  <td class="stripe" style="--team: #fcd700"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/lawson/">LAW</a><span class="drv-team">Racing Bulls</span></td>
+  <td class="num">0.1%</td>
+  <td class="num fin">9</td>
+  <td class="l delta">
+<span class="hit" title="Exact">✓</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">10</td>
+  <td class="stripe" style="--team: #ff6c4c"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/hulkenberg/">HUL</a><span class="drv-team">Audi</span></td>
+  <td class="num">0.1%</td>
+  <td class="num fin">11</td>
+  <td class="l delta">
+<span class="down">▼1</span>  </td>
+</tr>
+<tr>
+  <td class="pos">11</td>
+  <td class="stripe" style="--team: #ff87bc"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/gasly/">GAS</a><span class="drv-team">Alpine</span></td>
+  <td class="num">0.1%</td>
+  <td class="num fin">10</td>
+  <td class="l delta">
+<span class="up">▲1</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">12</td>
+  <td class="stripe" style="--team: #fcd700"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/arvid_lindblad/">LIN</a><span class="drv-team">Racing Bulls</span></td>
+  <td class="num">0.0%</td>
+  <td class="num fin">12</td>
+  <td class="l delta">
+<span class="hit" title="Exact">✓</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">13</td>
+  <td class="stripe" style="--team: #b6babd"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/bearman/">BEA</a><span class="drv-team">Haas F1 Team</span></td>
+  <td class="num">0.0%</td>
+  <td class="num fin"><span class="out">DNF</span></td>
+  <td class="l delta">
+  </td>
+</tr>
+<tr>
+  <td class="pos">14</td>
+  <td class="stripe" style="--team: #ff87bc"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/colapinto/">COL</a><span class="drv-team">Alpine</span></td>
+  <td class="num">0.0%</td>
+  <td class="num fin"><span class="out">DNF</span></td>
+  <td class="l delta">
+  </td>
+</tr>
+<tr>
+  <td class="pos">15</td>
+  <td class="stripe" style="--team: #ff6c4c"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/bortoleto/">BOR</a><span class="drv-team">Audi</span></td>
+  <td class="num">0.0%</td>
+  <td class="num fin">13</td>
+  <td class="l delta">
+<span class="up">▲2</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">16</td>
+  <td class="stripe" style="--team: #4c948f"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/alonso/">ALO</a><span class="drv-team">Aston Martin</span></td>
+  <td class="num">0.0%</td>
+  <td class="num fin">16</td>
+  <td class="l delta">
+<span class="hit" title="Exact">✓</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">17</td>
+  <td class="stripe" style="--team: #b6babd"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/ocon/">OCO</a><span class="drv-team">Haas F1 Team</span></td>
+  <td class="num">0.0%</td>
+  <td class="num fin">14</td>
+  <td class="l delta">
+<span class="up">▲3</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">18</td>
+  <td class="stripe" style="--team: #00a0dd"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/sainz/">SAI</a><span class="drv-team">Williams</span></td>
+  <td class="num">0.0%</td>
+  <td class="num fin">18</td>
+  <td class="l delta">
+<span class="hit" title="Exact">✓</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">19</td>
+  <td class="stripe" style="--team: #00a0dd"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/albon/">ALB</a><span class="drv-team">Williams</span></td>
+  <td class="num">0.0%</td>
+  <td class="num fin">17</td>
+  <td class="l delta">
+<span class="up">▲2</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">20</td>
+  <td class="stripe" style="--team: #4c948f"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/stroll/">STR</a><span class="drv-team">Aston Martin</span></td>
+  <td class="num">0.0%</td>
+  <td class="num fin">15</td>
+  <td class="l delta">
+<span class="up">▲5</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">21</td>
+  <td class="stripe" style="--team: #7c7c7c"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/perez/">PER</a><span class="drv-team">Cadillac</span></td>
+  <td class="num">0.0%</td>
+  <td class="num fin">19</td>
+  <td class="l delta">
+<span class="up">▲2</span>
+  </td>
+</tr>
+<tr>
+  <td class="pos">22</td>
+  <td class="stripe" style="--team: #7c7c7c"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/bottas/">BOT</a><span class="drv-team">Cadillac</span></td>
+  <td class="num">0.0%</td>
+  <td class="num fin"><span class="out">DNF</span></td>
+  <td class="l delta">
+  </td>
+</tr>
+</tbody>
+</table>
+</div>
+
+</section>
+<section class="panel" id="tab-chances" role="tabpanel">
+  <h2 class="section-title">Chances</h2>
+  <p class="legend"><span><i></i>Win</span><span><i class="soft"></i>Podium</span></p>
+  <svg class="chart" viewBox="0 0 640 304" role="img" aria-label="Win and podium chance for the leading 10 drivers"><line class="gridline" x1="64.0" y1="18" x2="64.0" y2="300" /><text class="axis" x="64.0" y="12" text-anchor="middle">0</text><line class="gridline" x1="196.0" y1="18" x2="196.0" y2="300" /><text class="axis" x="196.0" y="12" text-anchor="middle">25</text><line class="gridline" x1="328.0" y1="18" x2="328.0" y2="300" /><text class="axis" x="328.0" y="12" text-anchor="middle">50</text><line class="gridline" x1="460.0" y1="18" x2="460.0" y2="300" /><text class="axis" x="460.0" y="12" text-anchor="middle">75</text><line class="gridline" x1="592.0" y1="18" x2="592.0" y2="300" /><text class="axis" x="592.0" y="12" text-anchor="middle">100</text><text class="axis" x="14" y="41" text-anchor="end">1</text><text class="code" x="22" y="42">ANT</text><rect x="64" y="28" width="466.8" height="16" fill="#27f4d2" fill-opacity=".3" /><rect x="64" y="28" width="234.4" height="16" fill="#27f4d2" /><text class="axis" x="536.8" y="41">88</text><text class="val" x="292.4" y="41" text-anchor="end" fill="#10131a">44</text><text class="axis" x="14" y="69" text-anchor="end">2</text><text class="code" x="22" y="70">LEC</text><rect x="64" y="56" width="385.4" height="16" fill="#ef4c63" fill-opacity=".3" /><rect x="64" y="56" width="115.6" height="16" fill="#ef4c63" /><text class="axis" x="455.4" y="69">73</text><text class="val" x="173.6" y="69" text-anchor="end" fill="#ffffff">22</text><text class="axis" x="14" y="97" text-anchor="end">3</text><text class="code" x="22" y="98">VER</text><rect x="64" y="84" width="381.2" height="16" fill="#8582f7" fill-opacity=".3" /><rect x="64" y="84" width="113.0" height="16" fill="#8582f7" /><text class="axis" x="451.2" y="97">72</text><text class="val" x="171.0" y="97" text-anchor="end" fill="#ffffff">21</text><text class="axis" x="14" y="125" text-anchor="end">4</text><text class="code" x="22" y="126">HAM</text><rect x="64" y="112" width="144.1" height="16" fill="#ef4c63" fill-opacity=".3" /><rect x="64" y="112" width="27.5" height="16" fill="#ef4c63" /><text class="axis" x="214.1" y="125">27</text><text class="axis" x="14" y="153" text-anchor="end">5</text><text class="code" x="22" y="154">HAD</text><rect x="64" y="140" width="98.7" height="16" fill="#8582f7" fill-opacity=".3" /><rect x="64" y="140" width="18.0" height="16" fill="#8582f7" /><text class="axis" x="168.7" y="153">19</text><text class="axis" x="14" y="181" text-anchor="end">6</text><text class="code" x="22" y="182">RUS</text><rect x="64" y="168" width="49.6" height="16" fill="#27f4d2" fill-opacity=".3" /><rect x="64" y="168" width="8.4" height="16" fill="#27f4d2" /><text class="axis" x="119.6" y="181">9</text><text class="axis" x="14" y="209" text-anchor="end">7</text><text class="code" x="22" y="210">PIA</text><rect x="64" y="196" width="26.9" height="16" fill="#ff8000" fill-opacity=".3" /><rect x="64" y="196" width="4.8" height="16" fill="#ff8000" /><text class="axis" x="96.9" y="209">5</text><text class="axis" x="14" y="237" text-anchor="end">8</text><text class="code" x="22" y="238">NOR</text><rect x="64" y="224" width="15.8" height="16" fill="#ff8000" fill-opacity=".3" /><rect x="64" y="224" width="3.2" height="16" fill="#ff8000" /><text class="axis" x="85.8" y="237">3</text><text class="axis" x="14" y="265" text-anchor="end">9</text><text class="code" x="22" y="266">LAW</text><rect x="64" y="252" width="3.2" height="16" fill="#fcd700" fill-opacity=".3" /><rect x="64" y="252" width="0.5" height="16" fill="#fcd700" /><text class="axis" x="73.2" y="265">1</text><text class="axis" x="14" y="293" text-anchor="end">10</text><text class="code" x="22" y="294">HUL</text><rect x="64" y="280" width="3.7" height="16" fill="#ff6c4c" fill-opacity=".3" /><rect x="64" y="280" width="0.5" height="16" fill="#ff6c4c" /><text class="axis" x="73.7" y="293">1</text></svg>
+</section>
+<section class="panel" id="tab-field" role="tabpanel">
+  <h2 class="section-title">Full field</h2>
+  <div class="scroller">
+<table>
+<thead><tr><th>Pred</th><th></th><th class="l">Driver</th><th class="l hide-sm">Team</th><th>Grid</th><th>Win</th><th>Podium</th><th>Points</th><th>DNF</th></tr></thead>
+<tbody>
+<tr>
+  <td class="pos">1</td>
+  <td class="stripe" style="--team: #27f4d2"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/antonelli/">ANT</a></td>
+  <td class="l team hide-sm">Mercedes</td>
+  <td class="num">1</td>
+  <td class="num win">44.4</td>
+  <td class="num">88.4</td>
+  <td class="num">94.7</td>
+  <td class="num">5.5</td>
+</tr>
+<tr>
+  <td class="pos">2</td>
+  <td class="stripe" style="--team: #ef4c63"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/leclerc/">LEC</a></td>
+  <td class="l team hide-sm">Ferrari</td>
+  <td class="num">4<span class="move">+2</span></td>
+  <td class="num win">21.9</td>
+  <td class="num">73.0</td>
+  <td class="num">92.8</td>
+  <td class="num">7.4</td>
+</tr>
+<tr>
+  <td class="pos">3</td>
+  <td class="stripe" style="--team: #8582f7"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/max_verstappen/">VER</a></td>
+  <td class="l team hide-sm">Red Bull Racing</td>
+  <td class="num">2<span class="move">-1</span></td>
+  <td class="num win">21.4</td>
+  <td class="num">72.2</td>
+  <td class="num">92.2</td>
+  <td class="num">8.0</td>
+</tr>
+<tr>
+  <td class="pos">4</td>
+  <td class="stripe" style="--team: #ef4c63"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/hamilton/">HAM</a></td>
+  <td class="l team hide-sm">Ferrari</td>
+  <td class="num">5<span class="move">+1</span></td>
+  <td class="num win">5.2</td>
+  <td class="num">27.3</td>
+  <td class="num">91.5</td>
+  <td class="num">8.5</td>
+</tr>
+<tr>
+  <td class="pos">5</td>
+  <td class="stripe" style="--team: #8582f7"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/hadjar/">HAD</a></td>
+  <td class="l team hide-sm">Red Bull Racing</td>
+  <td class="num">3<span class="move">-2</span></td>
+  <td class="num win">3.4</td>
+  <td class="num">18.7</td>
+  <td class="num">92.2</td>
+  <td class="num">7.6</td>
+</tr>
+<tr>
+  <td class="pos">6</td>
+  <td class="stripe" style="--team: #27f4d2"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/russell/">RUS</a></td>
+  <td class="l team hide-sm">Mercedes</td>
+  <td class="num">6</td>
+  <td class="num win">1.6</td>
+  <td class="num">9.4</td>
+  <td class="num">90.4</td>
+  <td class="num">9.2</td>
+</tr>
+<tr>
+  <td class="pos">7</td>
+  <td class="stripe" style="--team: #ff8000"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/piastri/">PIA</a></td>
+  <td class="l team hide-sm">McLaren</td>
+  <td class="num">7</td>
+  <td class="num win">0.9</td>
+  <td class="num">5.1</td>
+  <td class="num">88.2</td>
+  <td class="num">10.5</td>
+</tr>
+<tr>
+  <td class="pos">8</td>
+  <td class="stripe" style="--team: #ff8000"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/norris/">NOR</a></td>
+  <td class="l team hide-sm">McLaren</td>
+  <td class="num">8</td>
+  <td class="num win">0.6</td>
+  <td class="num">3.0</td>
+  <td class="num">84.2</td>
+  <td class="num">11.9</td>
+</tr>
+<tr>
+  <td class="pos">9</td>
+  <td class="stripe" style="--team: #fcd700"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/lawson/">LAW</a></td>
+  <td class="l team hide-sm">Racing Bulls</td>
+  <td class="num">9</td>
+  <td class="num win">0.1</td>
+  <td class="num">0.6</td>
+  <td class="num">53.4</td>
+  <td class="num">9.7</td>
+</tr>
+<tr>
+  <td class="pos">10</td>
+  <td class="stripe" style="--team: #ff6c4c"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/hulkenberg/">HUL</a></td>
+  <td class="l team hide-sm">Audi</td>
+  <td class="num">11<span class="move">+1</span></td>
+  <td class="num win">0.1</td>
+  <td class="num">0.7</td>
+  <td class="num">49.0</td>
+  <td class="num">13.3</td>
+</tr>
+<tr>
+  <td class="pos">11</td>
+  <td class="stripe" style="--team: #ff87bc"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/gasly/">GAS</a></td>
+  <td class="l team hide-sm">Alpine</td>
+  <td class="num">10<span class="move">-1</span></td>
+  <td class="num win">0.1</td>
+  <td class="num">0.6</td>
+  <td class="num">48.5</td>
+  <td class="num">12.1</td>
+</tr>
+<tr>
+  <td class="pos">12</td>
+  <td class="stripe" style="--team: #fcd700"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/arvid_lindblad/">LIN</a></td>
+  <td class="l team hide-sm">Racing Bulls</td>
+  <td class="num">14<span class="move">+2</span></td>
+  <td class="num win">0.0</td>
+  <td class="num">0.5</td>
+  <td class="num">39.8</td>
+  <td class="num">17.5</td>
+</tr>
+<tr>
+  <td class="pos">13</td>
+  <td class="stripe" style="--team: #b6babd"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/bearman/">BEA</a></td>
+  <td class="l team hide-sm">Haas F1 Team</td>
+  <td class="num">13</td>
+  <td class="num win">0.0</td>
+  <td class="num">0.2</td>
+  <td class="num">26.2</td>
+  <td class="num">14.6</td>
+</tr>
+<tr>
+  <td class="pos">14</td>
+  <td class="stripe" style="--team: #ff87bc"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/colapinto/">COL</a></td>
+  <td class="l team hide-sm">Alpine</td>
+  <td class="num">20<span class="move">+6</span></td>
+  <td class="num win">0.0</td>
+  <td class="num">0.1</td>
+  <td class="num">12.4</td>
+  <td class="num risk">24.1</td>
+</tr>
+<tr>
+  <td class="pos">15</td>
+  <td class="stripe" style="--team: #ff6c4c"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/bortoleto/">BOR</a></td>
+  <td class="l team hide-sm">Audi</td>
+  <td class="num">21<span class="move">+6</span></td>
+  <td class="num win">0.0</td>
+  <td class="num">0.1</td>
+  <td class="num">9.7</td>
+  <td class="num risk">23.7</td>
+</tr>
+<tr>
+  <td class="pos">16</td>
+  <td class="stripe" style="--team: #4c948f"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/alonso/">ALO</a></td>
+  <td class="l team hide-sm">Aston Martin</td>
+  <td class="num">12<span class="move">-4</span></td>
+  <td class="num win">0.0</td>
+  <td class="num">0.1</td>
+  <td class="num">9.6</td>
+  <td class="num risk">22.5</td>
+</tr>
+<tr>
+  <td class="pos">17</td>
+  <td class="stripe" style="--team: #b6babd"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/ocon/">OCO</a></td>
+  <td class="l team hide-sm">Haas F1 Team</td>
+  <td class="num">15<span class="move">-2</span></td>
+  <td class="num win">0.0</td>
+  <td class="num">0.0</td>
+  <td class="num">8.4</td>
+  <td class="num">17.0</td>
+</tr>
+<tr>
+  <td class="pos">18</td>
+  <td class="stripe" style="--team: #00a0dd"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/sainz/">SAI</a></td>
+  <td class="l team hide-sm">Williams</td>
+  <td class="num">16<span class="move">-2</span></td>
+  <td class="num win">0.0</td>
+  <td class="num">0.0</td>
+  <td class="num">4.9</td>
+  <td class="num">19.9</td>
+</tr>
+<tr>
+  <td class="pos">19</td>
+  <td class="stripe" style="--team: #00a0dd"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/albon/">ALB</a></td>
+  <td class="l team hide-sm">Williams</td>
+  <td class="num">17<span class="move">-2</span></td>
+  <td class="num win">0.0</td>
+  <td class="num">0.0</td>
+  <td class="num">4.5</td>
+  <td class="num">19.1</td>
+</tr>
+<tr>
+  <td class="pos">20</td>
+  <td class="stripe" style="--team: #4c948f"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/stroll/">STR</a></td>
+  <td class="l team hide-sm">Aston Martin</td>
+  <td class="num">22<span class="move">+2</span></td>
+  <td class="num win">0.0</td>
+  <td class="num">0.0</td>
+  <td class="num">3.2</td>
+  <td class="num risk">42.5</td>
+</tr>
+<tr>
+  <td class="pos">21</td>
+  <td class="stripe" style="--team: #7c7c7c"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/perez/">PER</a></td>
+  <td class="l team hide-sm">Cadillac</td>
+  <td class="num">18<span class="move">-3</span></td>
+  <td class="num win">0.0</td>
+  <td class="num">0.0</td>
+  <td class="num">2.5</td>
+  <td class="num risk">27.1</td>
+</tr>
+<tr>
+  <td class="pos">22</td>
+  <td class="stripe" style="--team: #7c7c7c"><i></i></td>
+  <td class="drv"><a href="https://rdgonzaga.github.io/f1-prediction/drivers/bottas/">BOT</a></td>
+  <td class="l team hide-sm">Cadillac</td>
+  <td class="num">19<span class="move">-3</span></td>
+  <td class="num win">0.0</td>
+  <td class="num">0.0</td>
+  <td class="num">1.9</td>
+  <td class="num risk">27.4</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+</section>
+
+
+<section class="note">
+  <p>The predicted order sits close to the starting grid, and that is expected. This model has <strong>not</strong> been shown to beat "everyone finishes where they start". The percentages are what it adds: checked against past races, they come out about right on average.</p>
+  <p>Grid penalties are only included if they were entered by hand. They are never in the timing data this is built from.</p>
+</section>
+<footer class="race-notes">
+<p>Grid overrides: LIN P14, COL P20, BOR P21, STR pit lane</p><p>Probability spread 0.33, calibrated on 12 earlier races.</p><p class="warn">Data check: United States Grand Prix: no practice or sprint laps</p><p class="warn">Data check: United States Grand Prix: no weather or track status</p></footer>
+</main>
+<footer class="wrap sitefoot">
+  <p>Built from FastF1 timing data. Code and method on <a href="https://github.com/rdgonzaga/f1-prediction">GitHub</a>. Not affiliated with Formula 1.</p>
+</footer>
+<script>document.querySelectorAll("[data-tabs]").forEach(function (list) {
+  var tabs = Array.prototype.slice.call(list.querySelectorAll('[role="tab"]'));
+  function show(tab) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+    });
+  }
+  tabs.forEach(function (t) { t.addEventListener("click", function () { show(t); }); });
+  if (tabs.length) show(tabs[0]);
+});
+</script>
+</body>
+</html>

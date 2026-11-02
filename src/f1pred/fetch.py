@@ -1,4 +1,4 @@
-"""FastF1 extractor without telemetry; clears each event's cache after saving."""
+"""FastF1 extractor without telemetry, with an official results fallback; clears each event's cache after saving."""
 from __future__ import annotations
 
 import shutil
@@ -8,11 +8,11 @@ from datetime import datetime, timezone
 import fastf1
 import pandas as pd
 
-from f1pred import config
+from f1pred import config, official
 
 LOG_COLUMNS = [
     "SessionKey", "Season", "RoundNumber", "EventName", "SessionCode",
-    "Status", "Attempts", "ResultsRows", "LapsRows", "UpdatedAtUTC", "Error",
+    "Status", "Source", "Attempts", "ResultsRows", "LapsRows", "UpdatedAtUTC", "Error",
 ]
 
 
@@ -74,7 +74,10 @@ def build_queue(seasons: list[int], max_events: int | None = None,
 
 def load_log() -> pd.DataFrame:
     if config.LOG_PATH.exists():
-        return pd.read_csv(config.LOG_PATH).drop_duplicates("SessionKey", keep="last")
+        log_df = pd.read_csv(config.LOG_PATH).drop_duplicates("SessionKey", keep="last")
+        if "Source" not in log_df:
+            log_df["Source"] = log_df["Status"].eq("DONE").map({True: "fastf1", False: ""})
+        return log_df
     return pd.DataFrame(columns=LOG_COLUMNS)
 
 
@@ -110,11 +113,8 @@ def sessions_missing_results() -> set[str]:
     return keys
 
 
-def extract_session(job) -> dict[str, pd.DataFrame]:
-    session = fastf1.get_session(int(job.Season), int(job.RoundNumber), job.SessionName)
-    session.load(laps=True, telemetry=False, weather=True, messages=True)
-
-    meta = {
+def _meta(job) -> dict:
+    return {
         "Season": int(job.Season),
         "RoundNumber": int(job.RoundNumber),
         "EventName": job.EventName,
@@ -122,6 +122,19 @@ def extract_session(job) -> dict[str, pd.DataFrame]:
         "Location": job.Location,
         "SessionCode": job.SessionCode,
     }
+
+
+def extract_official(job) -> dict[str, pd.DataFrame]:
+    results = official.session_results(int(job.Season), job.SessionCode, job.Country, job.Location, job.EventName)
+    for k, v in _meta(job).items():
+        results[k] = v
+    return {"results": results}
+
+
+def extract_session(job) -> dict[str, pd.DataFrame]:
+    session = fastf1.get_session(int(job.Season), int(job.RoundNumber), job.SessionName)
+    session.load(laps=True, telemetry=False, weather=True, messages=True)
+    meta = _meta(job)
 
     results = session.results.reset_index(drop=True).copy()
     for col in ["Q1", "Q2", "Q3", "Time"]:
@@ -177,7 +190,8 @@ def run(seasons: list[int], max_events: int | None = None, rounds: list[int] | N
     done = set(log_df.loc[log_df["Status"] == "DONE", "SessionKey"])
     if not retry_errors:
         done |= set(log_df.loc[log_df["Status"] == "ERROR", "SessionKey"])
-    refetch = done & (sessions_missing_messages() | sessions_missing_results())
+    from_official = set(log_df.loc[log_df["Source"].eq("official"), "SessionKey"])
+    refetch = done & (sessions_missing_messages() | sessions_missing_results() | from_official)
     done -= refetch
     todo = queue[~queue["SessionKey"].isin(done)]
     print(f"Sessions in scope: {len(queue)} | done: {len(queue) - len(todo)} | "
@@ -185,13 +199,13 @@ def run(seasons: list[int], max_events: int | None = None, rounds: list[int] | N
 
     for (season, rnd), event_jobs in todo.groupby(["Season", "RoundNumber"], sort=False):
         for job in event_jobs.itertuples(index=False):
-            status, error, attempts, tables = "ERROR", "", 0, {}
+            status, source, error, attempts, tables = "ERROR", "", "", 0, {}
             while attempts < config.MAX_RETRIES:
                 attempts += 1
                 try:
                     tables = extract_session(job)
                     save_tables(job, tables)
-                    status, error = "DONE", ""
+                    status, source, error = "DONE", "fastf1", ""
                     break
                 except Exception as exc:
                     error = f"{type(exc).__name__}: {exc}"
@@ -202,6 +216,14 @@ def run(seasons: list[int], max_events: int | None = None, rounds: list[int] | N
                     elif attempts < config.MAX_RETRIES:
                         time.sleep(config.RETRY_SLEEP_SECONDS * attempts)
 
+            if status == "ERROR" and job.SessionCode in official.PAGES:
+                try:
+                    tables = extract_official(job)
+                    save_tables(job, tables)
+                    status, source, error = "DONE", "official", f"FastF1 failed ({error[:120]}); used formula1.com"
+                except Exception as exc:
+                    error = f"{error[:150]} | official: {type(exc).__name__}: {exc}"
+
             log_df = upsert_log(log_df, {
                 "SessionKey": job.SessionKey,
                 "Season": job.Season,
@@ -209,6 +231,7 @@ def run(seasons: list[int], max_events: int | None = None, rounds: list[int] | N
                 "EventName": job.EventName,
                 "SessionCode": job.SessionCode,
                 "Status": status,
+                "Source": source,
                 "Attempts": attempts,
                 "ResultsRows": len(tables.get("results", [])),
                 "LapsRows": len(tables.get("laps", [])),
@@ -216,7 +239,8 @@ def run(seasons: list[int], max_events: int | None = None, rounds: list[int] | N
                 "Error": error[:300],
             })
             print(f"  {job.SessionKey:<14} {job.EventName:<28} {status}"
-                  + (f"  ({error[:80]})" if error else ""))
+                  + (" (official results only)" if source == "official" else "")
+                  + (f"  ({error[:80]})" if error and status == "ERROR" else ""))
 
         if not keep_cache:
             purge_event_cache(int(season), event_jobs["EventName"].iloc[0])

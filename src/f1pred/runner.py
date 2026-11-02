@@ -9,7 +9,7 @@ from datetime import timedelta, timezone
 
 import pandas as pd
 
-from f1pred import config, market, notify, predict, report, score, weekend
+from f1pred import build, config, databranch, market, notify, predict, report, score, weekend
 from f1pred.web import build as web
 
 QUALI_LANDS = pd.Timedelta(hours=1)
@@ -133,6 +133,16 @@ def git(*args: str) -> str:
                           capture_output=True, text=True, encoding="utf-8").stdout.strip()
 
 
+def sync_main(run_git: Callable[..., str] = git) -> None:
+    """Fast-forward main so site commits made by CI don't conflict with this run's."""
+    if run_git("rev-parse", "--abbrev-ref", "HEAD") != "main":
+        return
+    try:
+        run_git("pull", "--ff-only")
+    except subprocess.CalledProcessError:
+        print("Could not fast-forward main; carrying on with the local copy.")
+
+
 def publish(step: Step, event_name: str, run_git: Callable[..., str] = git) -> bool:
     """Commit and push site/ on main; skip anywhere else so a feature branch never gets site commits."""
     branch = run_git("rev-parse", "--abbrev-ref", "HEAD")
@@ -178,6 +188,9 @@ def run(season: int | None = None, wait_minutes: int = 0, now: pd.Timestamp | No
 def _run(season, wait_minutes, now, publish_site, penalties, pitlane, slots) -> tuple[Step, bool]:
     season = season or pd.Timestamp.now().year
     now = now or pd.Timestamp.now(tz="UTC")
+    if publish_site:
+        sync_main()
+        databranch.pull()
     scored = scored_rounds()
     sess = sessions(season)
     fixes = bool(penalties or pitlane or slots)
@@ -187,6 +200,8 @@ def _run(season, wait_minutes, now, publish_site, penalties, pitlane, slots) -> 
         print("Grid fixes not used: nothing is waiting to be predicted.")
 
     grid = {"penalties": penalties, "pitlane": pitlane, "slots": slots}
+    if step.action != "wait" and not (config.PROCESSED_DIR / "entries.parquet").exists():
+        build.run()
     if step.action == "predict":
         weekend.run(season, str(step.rnd), wait_minutes=wait_minutes, **grid)
     elif step.action == "regrid":
@@ -198,9 +213,12 @@ def _run(season, wait_minutes, now, publish_site, penalties, pitlane, slots) -> 
             market.run(season, [step.rnd])
         if not score.run(season, refresh=True).empty:
             web.build_site()
+    if publish_site:
+        published = step.action != "wait" and publish(step, step.name)
+        done = f" ({step.name} {DONE_WORDS[step.action]})" if step.name else ""
+        databranch.push(f"chore: update data{done}")
+        return step, published
     if step.action == "wait":
         return step, False
-    if publish_site:
-        return step, publish(step, step.name)
     print("\nDone. If site/ changed, commit and push it, or run with --publish.")
     return step, False

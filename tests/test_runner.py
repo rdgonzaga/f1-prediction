@@ -99,6 +99,12 @@ def calls(monkeypatch, tmp_path):
     monkeypatch.setattr(runner.web, "build_site", lambda: calls.append("site"))
     monkeypatch.setattr(runner.market, "run", lambda season, rounds: calls.append(("market", rounds)))
     monkeypatch.setattr(runner.score, "run", lambda season, refresh: calls.append("score") or pd.DataFrame({"a": [1]}))
+    monkeypatch.setattr(runner.config, "PROCESSED_DIR", tmp_path)
+    (tmp_path / "entries.parquet").touch()
+    monkeypatch.setattr(runner.build, "run", lambda: calls.append("build"))
+    monkeypatch.setattr(runner, "sync_main", lambda: calls.append("sync_main"))
+    monkeypatch.setattr(runner.databranch, "pull", lambda: calls.append("data_pull") or [])
+    monkeypatch.setattr(runner.databranch, "push", lambda message: calls.append(("data_push", message)))
     return calls
 
 
@@ -183,6 +189,47 @@ def test_run_only_publishes_when_asked(calls, monkeypatch):
     assert published == []
     runner.run(2026, now=at("2026-11-08 21:00"), publish_site=True)
     assert published == [("after_race", "São Paulo Grand Prix")]
+
+
+def test_publish_syncs_data_around_the_step(calls, monkeypatch):
+    monkeypatch.setattr(runner, "publish", lambda step, name: calls.append("publish") or True)
+    runner.run(2026, now=at("2026-11-08 21:00"), publish_site=True)
+    assert calls[:2] == ["sync_main", "data_pull"]
+    assert calls[-2:] == ["publish", ("data_push", "chore: update data (São Paulo Grand Prix scored)")]
+
+
+def test_publish_pushes_data_even_when_nothing_is_due(calls):
+    runner.run(2026, now=at("2026-11-07 18:30"), publish_site=True)
+    assert calls == ["sync_main", "data_pull", ("data_push", "chore: update data")]
+
+
+def test_no_data_sync_without_publish(calls):
+    runner.run(2026, now=at("2026-11-08 21:00"))
+    assert not any(c in ("sync_main", "data_pull") or c[0] == "data_push" for c in calls)
+
+
+def test_builds_processed_data_first_on_a_fresh_checkout(calls, tmp_path):
+    (tmp_path / "entries.parquet").unlink()
+    runner.run(2026, now=at("2026-11-08 21:00"))
+    assert calls[0] == "build"
+    calls.clear()
+    runner.run(2026, now=at("2026-11-07 18:30"))
+    assert "build" not in calls
+
+
+@pytest.mark.parametrize("branch, pulled", [("main", True), ("feat/x", False)])
+def test_sync_main_fast_forwards_only_on_main(branch, pulled):
+    run_git, calls = fake_git(branch)
+    runner.sync_main(run_git)
+    assert (("pull", "--ff-only") in calls) == pulled
+
+
+def test_sync_main_carries_on_when_it_cannot_fast_forward():
+    def run_git(*args):
+        if args[0] == "pull":
+            raise runner.subprocess.CalledProcessError(1, "git pull")
+        return "main"
+    runner.sync_main(run_git)
 
 
 def test_log_appends_output(calls, tmp_path, monkeypatch):

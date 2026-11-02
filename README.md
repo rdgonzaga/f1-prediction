@@ -41,6 +41,11 @@ To skip the clicking, `scripts/schedule-next.ps1` sets up a Windows task that ru
 `next --publish --notify` every hour in the background, logging to `data/next.log`. `--notify`
 pops a Windows toast when a step finishes or fails. Outside a race weekend it just exits. `scripts/schedule-next.ps1 -Remove` takes it off again.
 
+`--publish` also mirrors `data/raw` and the saved predictions to an orphan `data` branch, and
+copies in any files there that are missing locally (it never overwrites). The `Next` workflow
+uses that branch to run `next --publish` every 3 hours on GitHub, so a race still gets
+predicted and scored when the PC is off.
+
 The rest of this section is what it runs under the hood.
 
 Run it after qualifying and before the race, since qualifying is what it works from. Timing data

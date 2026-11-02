@@ -94,3 +94,15 @@ def test_failed_build_leaves_the_old_site_alone(built, monkeypatch):
         web.build_site(built, schedule=lambda year: pd.DataFrame())
     assert read(built, "") == before
     assert not any(p.name.startswith("site.") for p in built.parent.iterdir())
+
+
+def test_each_race_gets_a_share_image_and_preview_tags(built):
+    from PIL import Image
+    for rnd in (1, 2, 3):
+        with Image.open(built / "2026" / f"round-{rnd:02d}" / "share.png") as img:
+            assert img.size == (1200, 630)
+    page = read(built, "2026/round-02")
+    assert f'content="{web.SITE_URL}2026/round-02/share.png"' in page
+    assert 'content="Predicted podium: A 50%, B 30%, C 15%. A won as favourite at 50%."' in page
+    assert f'og:image" content="{web.SITE_URL}2026/round-03/share.png"' in read(built, "")
+    assert "og:image" not in read(built, "drivers/alpha")

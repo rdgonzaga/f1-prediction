@@ -10,7 +10,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from f1pred import build as processed
 from f1pred import config, market, score
-from f1pred.web import charts, data
+from f1pred.web import charts, data, share
 
 WEB_DIR = Path(__file__).parent
 STATIC_DIR = WEB_DIR / "static"
@@ -25,7 +25,7 @@ def environment() -> Environment:
     env = Environment(loader=FileSystemLoader(WEB_DIR / "templates"), autoescape=True,
                       trim_blocks=True, lstrip_blocks=True)
     env.filters["pct"] = _pct
-    env.globals.update(charts=charts, ordinal=data.ordinal, scorecard_path=None)
+    env.globals.update(charts=charts, ordinal=data.ordinal, scorecard_path=None, site_url=SITE_URL)
     return env
 
 
@@ -57,8 +57,11 @@ def build_site(out_dir: Path | None = None,
     def page(rel: str, template: str, root: str, **context) -> None:
         _write(staging, rel, render_page(env, template, root, site=site, **context))
 
+    def image(race: data.Race) -> None:
+        share.save(race, staging / race.path / "share.png")
+
     try:
-        _render_all(site, page)
+        _render_all(site, page, image)
     except Exception:
         shutil.rmtree(staging, ignore_errors=True)
         raise
@@ -71,15 +74,16 @@ def build_site(out_dir: Path | None = None,
     return out_dir
 
 
-def _render_all(site: data.Site, page: Callable[..., None]) -> None:
-    page("", "home.html", "./", active="home")
+def _render_all(site: data.Site, page: Callable[..., None], image: Callable[[data.Race], None]) -> None:
+    page("", "home.html", "./", active="home", share_race=site.current.latest)
     page("races", "races.html", "../", active="races")
     page("drivers", "drivers.html", "../", active="drivers")
     page("how-it-works", "how.html", "../", active="how")
     for season in site.seasons:
         races = season.races
         for i, race in enumerate(races):
-            page(race.path, "race.html", "../../", active="races", race=race,
+            image(race)
+            page(race.path, "race.html", "../../", active="races", race=race, share_race=race,
                  prev_race=races[i - 1] if i else None, next_race=races[i + 1] if i + 1 < len(races) else None)
         if season.scorecard:
             page(season.scorecard_path, "scorecard.html", "../../", active="scorecard", season=season)
@@ -103,7 +107,7 @@ def standalone_race(season: int, rnd: int) -> str:
     race = data.race(season, rnd, pred, season_entries[season_entries["RoundNumber"] == rnd],
                      data.driver_ids(season_entries), market.load_market(season, rnd))
     scorecard_path = f"{season}/scorecard/" if data.scorecard(season) else None
-    return _standalone("race.html", scorecard_path, active="races", race=race,
+    return _standalone("race.html", scorecard_path, active="races", race=race, share_race=race,
                        prev_race=None, next_race=None)
 
 

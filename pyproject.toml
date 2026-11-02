@@ -15,4 +15,4 @@ where = ["src"]
 testpaths = ["tests"]
 
 [tool.setuptools.package-data]
-"f1pred.web" = ["templates/*.html", "static/*"]
+"f1pred.web" = ["templates/*.html", "static/*", "fonts/*"]

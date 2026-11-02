@@ -31,6 +31,17 @@ tally is in `data/processed/predictions/scorecard.csv`.
 
 ## A race weekend
 
+The short version: double-click `next.bat`, or run `python -m f1pred next`. It looks at the
+schedule and does whatever's due: predicts after qualifying, predicts again once the official
+grid is out, and scores after the race. If nothing's due it tells you the next session. Add
+`--publish` to commit and push `site/` too (only on `main`).
+
+To skip the clicking, `scripts/schedule-next.ps1` sets up a Windows task that runs
+`next --publish` every hour in the background, logging to `data/next.log`. Outside a race weekend
+it just exits. `scripts/schedule-next.ps1 -Remove` takes it off again.
+
+The rest of this section is what it runs under the hood.
+
 Run it after qualifying and before the race, since qualifying is what it works from. Timing data
 takes a few minutes to land, so give it about 90 minutes after the session starts.
 

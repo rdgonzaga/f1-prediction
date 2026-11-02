@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
-from f1pred import config, report, score
+from f1pred import config, grid, report, score
 from f1pred import season as season_scores
 
 MANILA_OFFSET = pd.Timedelta(hours=8)
@@ -186,6 +186,9 @@ def race(season: int, rnd: int, pred: pd.DataFrame, actual: pd.DataFrame,
     stamp = pd.to_datetime(first.get("PredictedAtUTC"), errors="coerce")
     if not pd.isna(stamp):
         out.made = f"{stamp:%a %d %b %Y, %H:%M} UTC · {stamp + MANILA_OFFSET:%H:%M} Manila"
+    source = _text(first.get("GridSource")).strip()
+    if source in grid.LABELS:
+        out.notes.append(grid.LABELS[source])
     overrides = _text(first.get("GridOverrides")).strip()
     if overrides:
         out.notes.append(overrides)

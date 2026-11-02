@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}F1 race predictions{% endblock %} · F1 Pred</title>
+<title>{% block title %}The odds behind P1{% endblock %} · P(1)</title>
 {% set description = "F1 race predictions made after qualifying: finishing order plus win, podium, points and retirement chances." %}
 <meta name="description" content="{{ description }}">
-<meta property="og:site_name" content="F1 Pred">
+<meta property="og:site_name" content="P(1)">
+<meta name="theme-color" content="#0a0a0d">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{ self.title() }}">
 <meta property="og:description" content="{% block og_description %}{{ description }}{% endblock %}">
@@ -19,17 +20,19 @@
 <script>document.documentElement.classList.add("js")</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Titillium+Web:wght@400;600;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap">
 {% if inline_css %}
 <style>{{ inline_css|safe }}</style>
 {% else %}
+<link rel="icon" href="{{ root }}static/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="{{ root }}static/apple-touch-icon.png">
 <link rel="stylesheet" href="{{ root }}static/site.css">
 {% endif %}
 </head>
 <body>
 <header class="topbar">
   <div class="wrap topbar-inner">
-    <a class="brand" href="{{ root }}"><span class="brand-mark"></span>F1<b>PRED</b></a>
+    <a class="brand" href="{{ root }}" aria-label="P(1) home">P<b>(1)</b><span class="brand-tag">the odds behind P1</span></a>
     <nav class="mainnav" aria-label="Main">
       <a href="{{ root }}"{% if active == "home" %} aria-current="page"{% endif %}>Home</a>
       <a href="{{ root }}races/"{% if active == "races" %} aria-current="page"{% endif %}>Races</a>

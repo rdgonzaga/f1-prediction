@@ -9,12 +9,12 @@ from f1pred.web import data
 
 FONTS = Path(__file__).parent / "fonts"
 SIZE = (1200, 630)
-BG, PANEL, INK, INK_2, INK_3, RED = "#0a0a0d", "#15151b", "#f4f4f6", "#b8b8c4", "#7d7d8b", "#e10600"
+BG, PANEL, INK, INK_2, INK_3, ACCENT = "#0a0a0d", "#15151b", "#f4f4f6", "#b8b8c4", "#7d7d8b", "#a259ff"
 PAD = 64
 
 
 def _font(weight: str, size: int) -> ImageFont.FreeTypeFont:
-    return ImageFont.truetype(str(FONTS / f"TitilliumWeb-{weight}.ttf"), size)
+    return ImageFont.truetype(str(FONTS / f"SpaceGrotesk-{weight}.ttf"), size)
 
 
 def _fit(draw: ImageDraw.ImageDraw, text: str, weight: str, size: int, width: int) -> ImageFont.FreeTypeFont:
@@ -25,20 +25,37 @@ def _fit(draw: ImageDraw.ImageDraw, text: str, weight: str, size: int, width: in
     return font
 
 
+def wordmark(draw: ImageDraw.ImageDraw, at: tuple[int, int], size: int) -> None:
+    font = _font("Bold", size)
+    draw.text(at, "P", font=font, fill=INK)
+    draw.text((at[0] + draw.textlength("P", font=font), at[1]), "(1)", font=font, fill=ACCENT)
+
+
+def icon(size: int) -> Image.Image:
+    img = Image.new("RGB", (size, size), BG)
+    draw = ImageDraw.Draw(img)
+    font = _font("Bold", round(size * 0.5))
+    width = draw.textlength("P(1)", font=font)
+    x = (size - width) / 2
+    y = size / 2
+    draw.text((x, y), "P", font=font, fill=INK, anchor="lm")
+    draw.text((x + draw.textlength("P", font=font), y), "(1)", font=font, fill=ACCENT, anchor="lm")
+    return img
+
+
 def render(race: data.Race) -> Image.Image:
     img = Image.new("RGB", SIZE, BG)
     draw = ImageDraw.Draw(img)
-    draw.rectangle([0, 0, SIZE[0], 10], fill=RED)
+    draw.rectangle([0, 0, SIZE[0], 10], fill=ACCENT)
 
-    draw.text((PAD, 44), "F1", font=_font("Black", 34), fill=INK)
-    draw.text((PAD + 42, 44), "PRED", font=_font("Black", 34), fill=RED)
+    wordmark(draw, (PAD, 40), 38)
     status = "LIVE · predicted before the race" if race.live else "Made after the race"
     eyebrow = f"ROUND {race.rnd} · {race.season}"
-    draw.text((SIZE[0] - PAD, 52), eyebrow, font=_font("SemiBold", 26), fill=INK_3, anchor="ra")
+    draw.text((SIZE[0] - PAD, 52), eyebrow, font=_font("Medium", 26), fill=INK_3, anchor="ra")
 
     name = race.name.upper()
-    draw.text((PAD, 104), name, font=_fit(draw, name, "Black", 84, SIZE[0] - 2 * PAD), fill=INK)
-    draw.text((PAD, 206), status, font=_font("SemiBold", 28), fill=RED if race.live else INK_3)
+    draw.text((PAD, 104), name, font=_fit(draw, name, "Bold", 84, SIZE[0] - 2 * PAD), fill=INK)
+    draw.text((PAD, 206), status, font=_font("Medium", 28), fill=ACCENT if race.live else INK_3)
 
     gap, top, bottom = 24, 270, 500
     width = (SIZE[0] - 2 * PAD - 2 * gap) // 3
@@ -46,11 +63,11 @@ def render(race: data.Race) -> Image.Image:
         x = PAD + i * (width + gap)
         draw.rectangle([x, top, x + width, bottom], fill=PANEL)
         draw.rectangle([x, top, x + width, top + 8], fill=row.color)
-        draw.text((x + 24, top + 26), f"P{row.pos}", font=_font("SemiBold", 26), fill=INK_3)
-        draw.text((x + 24, top + 52), row.code, font=_font("Black", 76), fill=INK)
+        draw.text((x + 24, top + 26), f"P{row.pos}", font=_font("Medium", 26), fill=INK_3)
+        draw.text((x + 24, top + 52), row.code, font=_font("Bold", 76), fill=INK)
         draw.text((x + 24, top + 150), f"{data.chance(row.win)} to win", font=_font("Bold", 32), fill=INK_2)
         if row.finish:
-            draw.text((x + 24, top + 190), row.finish_text, font=_font("SemiBold", 24), fill=INK_3)
+            draw.text((x + 24, top + 190), row.finish_text, font=_font("Medium", 24), fill=INK_3)
 
     if race.verdict is not None:
         foot = race.verdict.lines[0]

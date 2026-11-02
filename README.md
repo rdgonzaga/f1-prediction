@@ -60,21 +60,20 @@ Once the race is over, `python -m f1pred score --refresh` tells you how it did a
 an hour before the start; `score` then puts the market's winner log loss next to ours. Prices stay
 up after the race, so it can catch up on any round you missed.
 
-**Grid penalties you have to enter yourself:**
+**The starting grid is fetched for you.** Penalties never appear in the timing data (Antonelli's
+12-place drop at Monza isn't in any qualifying message), so `predict` pulls the official starting
+grid from formula1.com, with OpenF1 as a backup. The race page says which one it used. If neither
+has published it yet, the model assumes everyone starts where they qualified and the page says the
+grid is provisional.
+
+You can still set it by hand, which skips the fetch:
 
 ```
 python -m f1pred weekend 2026 16 --penalty VER=5 --pitlane STR
 ```
 
-That's not laziness. Penalties never appear in the timing data. I checked the two biggest grid drops
-in the dataset, Antonelli falling 12 places at Monza and Hadjar 11 at Spa, and neither is mentioned
-anywhere in the qualifying messages. They live in FIA stewards' documents, which FastF1 doesn't
-carry. So glance at the F1 site after qualifying, otherwise the model assumes everyone starts where
-they qualified.
-
-When the official grid is out, enter the slot itself instead: `--grid RUS=19`. That's more accurate
-than a place penalty, since "back of the grid" depends on who else got penalised. At Singapore 2026,
-`--penalty RUS=30` put Russell 22nd when he actually started 19th.
+Prefer the exact slot when you know it: `--grid RUS=19`. "Back of the grid" depends on who else got
+penalised, so at Singapore 2026 `--penalty RUS=30` put Russell 22nd when he actually started 19th.
 
 **Run it before the race starts.** Once the result exists, `predict` refuses, since a prediction made
 in hindsight doesn't count when you score it. `--backfill` saves one anyway.

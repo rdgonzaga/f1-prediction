@@ -76,12 +76,13 @@ def test_grid_labels_and_moves():
 def test_notes_and_stamp_come_from_the_csv():
     pred = pred_frame(pre_race=True).assign(
         EventName="Azerbaijan Grand Prix", PredictedAtUTC="2026-09-25 16:16:37",
-        GridOverrides="Grid overrides: ALO +30", Temperature=0.42, CalibrationRaces=12,
+        GridOverrides="Grid overrides: ALO +30", GridSource="manual", Temperature=0.42, CalibrationRaces=12,
         Warnings="no weather; no track status")
     race = make_race(pred=pred)
     assert race.live and race.short_name == "Azerbaijan" and race.path == "2026/round-01/"
     assert race.made == "Fri 25 Sep 2026, 16:16 UTC · 00:16 Manila"
-    assert race.notes == ["Grid overrides: ALO +30", "Probability spread 0.42, calibrated on 12 earlier races."]
+    assert race.notes == ["Starting grid: quali order with manual overrides", "Grid overrides: ALO +30",
+                          "Probability spread 0.42, calibrated on 12 earlier races."]
     assert race.warnings == ["no weather", "no track status"]
 
 

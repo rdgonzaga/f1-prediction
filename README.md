@@ -38,7 +38,7 @@ grid is out, and scores after the race. If nothing's due it tells you the next s
 work the same as on `predict`; given after the race is already predicted, they predict it again.
 
 To skip the clicking, `scripts/schedule-next.ps1` sets up a Windows task that runs
-`next --publish --notify` every hour in the background, logging to `data/next.log`. `--notify`
+`next --publish --notify` hourly on Saturdays, Sundays and Mondays (Manila time; races in the Americas end on Monday), logging to `data/next.log`. `--notify`
 pops a Windows toast when a step finishes or fails. Outside a race weekend it just exits. `scripts/schedule-next.ps1 -Remove` takes it off again.
 
 `--publish` also mirrors `data/raw` and the saved predictions to an orphan `data` branch, and

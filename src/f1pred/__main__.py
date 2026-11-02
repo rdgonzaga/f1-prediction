@@ -52,6 +52,7 @@ def main() -> None:
     p_next.add_argument("--pitlane", nargs="+", metavar="DRIVER", help="Pit lane starters, e.g. STR")
     p_next.add_argument("--grid", nargs="+", metavar="DRIVER=SLOT", help="Exact starting slots, e.g. RUS=19")
     p_next.add_argument("--publish", action="store_true", help="Commit and push site/ afterwards (only on main)")
+    p_next.add_argument("--notify", action="store_true", help="Windows toast when a step finishes or fails")
     p_next.add_argument("--log", metavar="PATH", help="Append all output to this file, for scheduled runs")
 
     p_report = sub.add_parser("report", help="Build a shareable HTML page from a saved prediction")
@@ -140,7 +141,7 @@ def main() -> None:
         from f1pred import predict, runner
         runner.run(args.season, args.wait, publish_site=args.publish, log=args.log,
                    penalties=predict.parse_penalties(args.penalty), pitlane=args.pitlane,
-                   slots=predict.parse_penalties(args.grid))
+                   slots=predict.parse_penalties(args.grid), notify_me=args.notify)
 
     if args.command == "market":
         from f1pred import market

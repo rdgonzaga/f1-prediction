@@ -9,7 +9,7 @@ from datetime import timedelta, timezone
 
 import pandas as pd
 
-from f1pred import config, market, predict, report, score, weekend
+from f1pred import config, market, notify, predict, report, score, weekend
 from f1pred.web import build as web
 
 QUALI_LANDS = pd.Timedelta(hours=1)
@@ -31,6 +31,7 @@ class Step:
     action: str
     rnd: int | None
     message: str
+    name: str = ""
 
 
 def manila(ts: pd.Timestamp) -> str:
@@ -112,18 +113,18 @@ def plan(sess: pd.DataFrame, now: pd.Timestamp, files: Callable[[int], RoundFile
             return Step("wait", rnd, f"{name} qualifying is on. Run again after {manila(race['QualiUTC'] + QUALI_LANDS)}.")
         f = files(rnd)
         if f.grid_source is None:
-            return Step("predict", rnd, f"Predicting {name} from qualifying.")
+            return Step("predict", rnd, f"Predicting {name} from qualifying.", name)
         if fixes:
-            return Step("regrid", rnd, f"Re-predicting {name} with your grid fixes.")
+            return Step("regrid", rnd, f"Re-predicting {name} with your grid fixes.", name)
         if f.grid_source == "provisional":
-            return Step("regrid", rnd, f"{name} was predicted on a provisional grid, checking for the official one.")
+            return Step("regrid", rnd, f"{name} was predicted on a provisional grid, checking for the official one.", name)
         return Step("wait", rnd, f"{name} is predicted. Race starts {manila(race['RaceUTC'])}.")
 
     if now < race["RaceUTC"] + RESULT_LANDS:
         return Step("wait", rnd, f"{name} race is on. Run again after {manila(race['RaceUTC'] + RESULT_LANDS)}.")
     f = files(rnd)
     if not f.market or (f.pre_race and not f.scored):
-        return Step("after_race", rnd, f"{name} is over, saving market odds and scoring.")
+        return Step("after_race", rnd, f"{name} is over, saving market odds and scoring.", name)
     return Step("wait", rnd, f"Nothing due, {name} is scored. {upcoming(sess, now)}")
 
 
@@ -153,12 +154,28 @@ def publish(step: Step, event_name: str, run_git: Callable[..., str] = git) -> b
     return True
 
 
+DONE_WORDS = {"predict": "predicted", "regrid": "re-predicted", "after_race": "scored"}
+
+
 def run(season: int | None = None, wait_minutes: int = 0, now: pd.Timestamp | None = None,
         publish_site: bool = False, log: str | None = None, penalties: dict[str, int] | None = None,
-        pitlane: list[str] | None = None, slots: dict[str, int] | None = None) -> Step:
+        pitlane: list[str] | None = None, slots: dict[str, int] | None = None, notify_me: bool = False) -> Step:
     if log:
         sys.stdout = sys.stderr = open(log, "a", encoding="utf-8", buffering=1)
         print(f"\n[{pd.Timestamp.now():%Y-%m-%d %H:%M}]")
+    try:
+        step, published = _run(season, wait_minutes, now, publish_site, penalties, pitlane, slots)
+    except (Exception, SystemExit) as exc:
+        if notify_me:
+            notify.toast("F1 Pred: next failed", str(exc) or type(exc).__name__)
+        raise
+    if notify_me and step.action != "wait":
+        tail = ", site published" if published else ""
+        notify.toast("F1 Pred", f"{step.name} {DONE_WORDS[step.action]}{tail}.")
+    return step
+
+
+def _run(season, wait_minutes, now, publish_site, penalties, pitlane, slots) -> tuple[Step, bool]:
     season = season or pd.Timestamp.now().year
     now = now or pd.Timestamp.now(tz="UTC")
     scored = scored_rounds()
@@ -182,9 +199,8 @@ def run(season: int | None = None, wait_minutes: int = 0, now: pd.Timestamp | No
         if not score.run(season, refresh=True).empty:
             web.build_site()
     if step.action == "wait":
-        return step
+        return step, False
     if publish_site:
-        publish(step, str(sess.loc[sess["RoundNumber"] == step.rnd, "EventName"].iloc[0]))
-    else:
-        print("\nDone. If site/ changed, commit and push it, or run with --publish.")
-    return step
+        return step, publish(step, step.name)
+    print("\nDone. If site/ changed, commit and push it, or run with --publish.")
+    return step, False

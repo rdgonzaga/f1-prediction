@@ -192,3 +192,34 @@ def test_log_appends_output(calls, tmp_path, monkeypatch):
     runner.run(2026, now=at("2026-11-07 18:30"), log=str(log))
     runner.sys.stdout.close()
     assert "São Paulo Grand Prix qualifying is on" in log.read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def toasts(monkeypatch):
+    sent = []
+    monkeypatch.setattr(runner.notify, "toast", lambda title, body: sent.append((title, body)))
+    return sent
+
+
+def test_notify_after_a_step(calls, toasts):
+    runner.run(2026, now=at("2026-11-08 21:00"), notify_me=True)
+    assert toasts == [("F1 Pred", "São Paulo Grand Prix scored.")]
+
+
+def test_notify_stays_quiet_when_nothing_is_due(calls, toasts):
+    runner.run(2026, now=at("2026-10-01"), notify_me=True)
+    assert toasts == []
+
+
+def test_notify_on_failure_and_reraise(calls, toasts, monkeypatch):
+    def broken(season, event, wait_minutes, **grid):
+        raise SystemExit("Qualifying for 2026 round 20 isn't available yet.")
+    monkeypatch.setattr(runner.weekend, "run", broken)
+    with pytest.raises(SystemExit):
+        runner.run(2026, now=at("2026-11-07 20:00"), notify_me=True)
+    assert toasts == [("F1 Pred: next failed", "Qualifying for 2026 round 20 isn't available yet.")]
+
+
+def test_toast_is_skipped_off_windows(monkeypatch):
+    monkeypatch.setattr(runner.notify.sys, "platform", "linux")
+    runner.notify.toast("t", "b", run=lambda *a, **k: pytest.fail("should not run"))

@@ -26,6 +26,25 @@
 </table>
 </div>
 
+{% if card.market %}
+{% set m = card.market %}
+<h2 class="section-title">Against the betting market</h2>
+<p class="legend"><span>Win chance each side gave the eventual winner, from Polymarket an hour before the start</span></p>
+<div class="scroller">
+<table class="totals">
+<thead><tr><th></th><th>Model</th><th>Polymarket</th></tr></thead>
+<tbody>
+{% for row in m.rows %}
+<tr><td class="l">R{{ row.rnd }} {{ row.name }}</td><td class="num{% if row.better %} better{% endif %}">{{ row.model }}</td><td class="num">{{ row.market }}</td></tr>
+{% endfor %}
+<tr class="sum"><td class="l">Average ({{ m.races }})</td><td class="num">{{ m.model_pct|pct(0) }}%</td><td class="num">{{ m.market_pct|pct(0) }}%</td></tr>
+<tr class="sum"><td class="l">Winner log loss, lower is better</td><td class="num{% if m.model_better %} better{% endif %}">{{ "%.2f"|format(m.model_loss) }}</td><td class="num{% if not m.model_better %} better{% endif %}">{{ "%.2f"|format(m.market_loss) }}</td></tr>
+</tbody>
+</table>
+</div>
+<p class="legend"><span>The model gave the winner more than the market in {{ m.model_more }} of {{ m.races }} races.</span></p>
+{% endif %}
+
 <h2 class="section-title">Race by race</h2>
 <p class="legend"><span><i class="dot-model"></i>Model</span><span><i class="dot-grid"></i>Grid order</span><span>Order match, 1 is perfect</span></p>
 {{ charts.dumbbell(card.races)|safe }}

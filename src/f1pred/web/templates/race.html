@@ -14,6 +14,7 @@
 </header>
 {{ podium(race) }}
 {{ verdict(race) }}
+{% if race.market_line %}<p class="market-line">{{ race.market_line }}</p>{% endif %}
 
 <div class="tabs" role="tablist" data-tabs>
   {% if not race.pending %}<button type="button" role="tab" aria-controls="tab-result">Result vs prediction</button>{% endif %}

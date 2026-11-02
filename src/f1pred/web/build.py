@@ -9,7 +9,7 @@ import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 
 from f1pred import build as processed
-from f1pred import config, score
+from f1pred import config, market, score
 from f1pred.web import charts, data
 
 WEB_DIR = Path(__file__).parent
@@ -101,7 +101,7 @@ def standalone_race(season: int, rnd: int) -> str:
     entries = processed.load_processed()[0]
     season_entries = entries[entries["Season"] == season]
     race = data.race(season, rnd, pred, season_entries[season_entries["RoundNumber"] == rnd],
-                     data.driver_ids(season_entries))
+                     data.driver_ids(season_entries), market.load_market(season, rnd))
     scorecard_path = f"{season}/scorecard/" if data.scorecard(season) else None
     return _standalone("race.html", scorecard_path, active="races", race=race,
                        prev_race=None, next_race=None)

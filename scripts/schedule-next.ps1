@@ -1,4 +1,4 @@
-# Runs `f1pred next --publish --notify` hourly on Sat, Sun and Mon (Manila race weekends; Americas races end Monday). -Remove takes it off again.
+# Runs `f1pred next --publish --notify` hourly from Sat 12:00 to Mon 18:00 Manila: earliest quali ends Sat noon, latest result (Vegas) lands Mon afternoon. -Remove takes it off again.
 param([switch]$Remove)
 
 $name = "f1pred next"
@@ -14,11 +14,11 @@ $log = Join-Path $root "data\next.log"
 if (-not (Test-Path $python)) { throw "No $python; set up the .venv first." }
 
 $action = New-ScheduledTaskAction -Execute $python -Argument "-m f1pred next --publish --notify --log `"$log`"" -WorkingDirectory $root
-$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Saturday, Sunday, Monday -At 00:00
-$trigger.Repetition = (New-ScheduledTaskTrigger -Once -At 00:00 -RepetitionInterval (New-TimeSpan -Hours 1) `
-    -RepetitionDuration (New-TimeSpan -Days 1)).Repetition
+$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Saturday -At 12:00
+$trigger.Repetition = (New-ScheduledTaskTrigger -Once -At 12:00 -RepetitionInterval (New-TimeSpan -Hours 1) `
+    -RepetitionDuration (New-TimeSpan -Hours 54)).Repetition
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
     -ExecutionTimeLimit (New-TimeSpan -Hours 2) -MultipleInstances IgnoreNew
 Register-ScheduledTask -TaskName $name -Action $action -Trigger $trigger -Settings $settings -Force `
     -Description "Predicts after quali and scores after the race, then pushes site/. Log: $log" | Out-Null
-Write-Output "Scheduled '$name' hourly on Sat, Sun and Mon. Log: $log"
+Write-Output "Scheduled '$name' hourly from Sat 12:00 to Mon 18:00. Log: $log"

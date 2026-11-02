@@ -1,6 +1,6 @@
 # f1-prediction
 
-Published as **P(1)**, the odds behind P1: https://rdgonzaga.github.io/f1-prediction/
+Published as **Parc Fermé**, race odds locked after qualifying: https://rdgonzaga.github.io/f1-prediction/
 
 Predicts an F1 race once qualifying is done: the finishing order, plus each driver's chance of
 winning, reaching the podium, scoring points, or retiring. Saves it as a web page you can open on

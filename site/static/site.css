@@ -7,7 +7,7 @@
   --ink: #f4f4f6;
   --ink-2: #b8b8c4;
   --ink-3: #7d7d8b;
-  --accent: #a259ff;
+  --accent: #e10600;
   --hi: #c4f24a;
   --up: #34d27b;
   --down: #ff5a4e;
@@ -26,7 +26,7 @@ main.wrap { padding-top: 28px; padding-bottom: 56px; }
 
 .topbar { background: #000; border-bottom: 3px solid var(--accent); }
 .topbar-inner { display: flex; align-items: center; gap: 24px; min-height: 54px; }
-.brand { display: flex; align-items: baseline; font-weight: 700; font-size: 22px; letter-spacing: -.01em; text-decoration: none; white-space: nowrap; }
+.brand { display: flex; align-items: baseline; gap: 6px; font-weight: 700; font-size: 20px; letter-spacing: .02em; text-decoration: none; white-space: nowrap; }
 .brand b { color: var(--accent); font-weight: 700; }
 .brand-tag { margin-left: 10px; color: var(--ink-3); font-weight: 500; font-size: 13px; letter-spacing: .02em; }
 @media (max-width: 560px) { .brand-tag { display: none; } }
@@ -43,7 +43,7 @@ h1 a:hover { color: #fff; }
 .eyebrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0; color: var(--ink-3); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
 .lede { color: var(--ink-2); max-width: 62ch; margin: 12px 0 0; }
 .lede a, .more a, .prose a, .note a { color: var(--ink); text-decoration-color: var(--accent); text-underline-offset: 3px; }
-.badge-live { display: inline-block; background: var(--accent); color: var(--bg); font-weight: 700; font-size: 11px; letter-spacing: .1em; line-height: 1.6; padding: 0 7px; border-radius: 2px; }
+.badge-live { display: inline-block; background: var(--accent); color: #fff; font-weight: 700; font-size: 11px; letter-spacing: .1em; line-height: 1.6; padding: 0 7px; border-radius: 2px; }
 .badge-after { border: 1px solid var(--line-2); color: var(--ink-2); font-weight: 600; font-size: 12px; padding: 1px 8px; border-radius: 2px; }
 .race-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 14px 0 0; color: var(--ink-2); font-size: 14px; }
 .made { color: var(--ink-3); font-family: var(--mono); font-size: 12px; }
@@ -126,7 +126,7 @@ a.card:hover { background: var(--panel-2); }
 .record .stat:hover { background: var(--panel-2); }
 .stat b.hi { color: var(--hi); }
 .big { color: var(--ink); font-family: var(--mono); font-weight: 700; font-size: 48px; line-height: 1; }
-.btn { justify-self: start; margin-top: 10px; padding: 10px 16px; background: var(--accent); color: var(--bg); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; text-decoration: none; }
+.btn { justify-self: start; margin-top: 10px; padding: 10px 16px; background: var(--accent); color: #fff; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; text-decoration: none; }
 .btn:hover { background: #ff1e14; }
 
 svg.chart { display: block; width: 100%; max-width: 720px; height: auto; }

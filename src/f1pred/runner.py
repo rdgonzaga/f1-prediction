@@ -129,7 +129,7 @@ def plan(sess: pd.DataFrame, now: pd.Timestamp, files: Callable[[int], RoundFile
 
 
 def git(*args: str) -> str:
-    return subprocess.run(["git", *args], cwd=config.PROJECT_ROOT, check=True,
+    return subprocess.run(["git", *args], cwd=config.PROJECT_ROOT, check=True, creationflags=databranch.NO_WINDOW,
                           capture_output=True, text=True, encoding="utf-8").stdout.strip()
 
 

@@ -14,11 +14,13 @@ REMOTE_REF = f"origin/{BRANCH}"
 PATHS = ["data/raw", "data/processed/predictions"]
 EXCLUDE = ":(exclude)data/raw/fastf1_cache"
 CHUNK = 100
+# The hourly task runs under pythonw, so each git call would otherwise flash a console window.
+NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
 
 def git(*args: str, index: Path | None = None) -> str:
     env = {**os.environ, "GIT_INDEX_FILE": str(index)} if index else None
-    return subprocess.run(["git", *args], cwd=config.PROJECT_ROOT, env=env, check=True,
+    return subprocess.run(["git", *args], cwd=config.PROJECT_ROOT, env=env, check=True, creationflags=NO_WINDOW,
                           capture_output=True, text=True, encoding="utf-8").stdout.strip()
 
 

@@ -208,3 +208,23 @@ def test_stale_schedule_is_used_when_the_lookup_fails(tmp_path, monkeypatch):
     calls = []
     data.fetch_schedule(2026, schedule_loader(calls))
     assert calls == [2026]
+
+
+def test_market_line_compares_the_winners_chances():
+    odds = pd.DataFrame({"Abbreviation": ["A", "B"], "MarketWinPct": [62.4, 0.2]})
+    assert make_race(odds=odds).market_line == "Polymarket had A at 62%, the model 50%"
+    assert make_race().market_line == ""
+    assert make_race(actual=actual_frame().assign(Classified="")).market_line == ""
+    assert data.chance(0.2) == "under 1%"
+
+
+def test_market_summary_only_counts_races_with_odds():
+    races = pd.DataFrame({
+        "RoundNumber": [1, 2, 3], "EventName": ["A Grand Prix", "B Grand Prix", "C Grand Prix"],
+        "WinnerWinPct": [50.0, 10.0, 40.0], "WinnerLogLoss": [0.69, 2.3, 0.92],
+        "MarketWinnerWinPct": [40.0, 30.0, None], "MarketWinnerLogLoss": [0.92, 1.2, None]})
+    m = data.market_summary(races)
+    assert (m.races, m.model_more) == (2, 1)
+    assert m.model_loss == pytest.approx(1.495) and not m.model_better
+    assert [r["name"] for r in m.rows] == ["A", "B"] and m.rows[0]["better"]
+    assert data.market_summary(races.drop(columns=["MarketWinnerWinPct", "MarketWinnerLogLoss"])) is None

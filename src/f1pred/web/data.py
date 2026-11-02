@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
-from f1pred import config, grid, report, score
+from f1pred import config, grid, market, report, score
 from f1pred import season as season_scores
 
 MANILA_OFFSET = pd.Timedelta(hours=8)
@@ -22,6 +22,10 @@ def ordinal(n: int) -> str:
 
 def _num(value) -> float | None:
     return None if value is None or pd.isna(value) else float(value)
+
+
+def chance(pct: float) -> str:
+    return "under 1%" if pct < 0.5 else f"{pct:.0f}%"
 
 
 def _text(value) -> str:
@@ -107,6 +111,7 @@ class Race:
     verdict: Verdict | None = None
     winner: str | None = None
     winner_color: str | None = None
+    market_winner: float | None = None
     made: str = ""
     notes: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -136,6 +141,14 @@ class Race:
         return self.winner is not None and self.winner == self.favourite.code
 
     @property
+    def market_line(self) -> str:
+        """Win chance the model and Polymarket gave the winner, once both are known."""
+        model = next((r.win for r in self.rows if r.code == self.winner), None)
+        if self.market_winner is None or model is None:
+            return ""
+        return f"Polymarket had {self.winner} at {chance(self.market_winner)}, the model {chance(model)}"
+
+    @property
     def card_color(self) -> str:
         return self.winner_color or self.favourite.color
 
@@ -155,7 +168,7 @@ def driver_ids(season_entries: pd.DataFrame) -> dict[str, str]:
 
 
 def race(season: int, rnd: int, pred: pd.DataFrame, actual: pd.DataFrame,
-         ids: dict[str, str] | None = None) -> Race:
+         ids: dict[str, str] | None = None, odds: pd.DataFrame | None = None) -> Race:
     ids = ids or {}
     result = score.race_result(actual)
     rows = []
@@ -182,6 +195,9 @@ def race(season: int, rnd: int, pred: pd.DataFrame, actual: pd.DataFrame,
             teams = actual.set_index("Abbreviation")["TeamName"] if "TeamName" in actual else pd.Series(dtype=str)
             team = next((r.team for r in rows if r.code == out.winner), None) or _text(teams.get(out.winner))
             out.winner_color = report.team_colors(team)[1]
+            if odds is not None:
+                pct = odds.set_index("Abbreviation")["MarketWinPct"].get(out.winner)
+                out.market_winner = _num(pct)
 
     stamp = pd.to_datetime(first.get("PredictedAtUTC"), errors="coerce")
     if not pd.isna(stamp):
@@ -280,6 +296,36 @@ def summary(races: pd.DataFrame) -> tuple[list[str], list[dict]]:
 
 
 @dataclass
+class MarketSummary:
+    races: int
+    model_more: int
+    model_loss: float
+    market_loss: float
+    model_pct: float
+    market_pct: float
+    rows: list[dict]
+
+    @property
+    def model_better(self) -> bool:
+        return self.model_loss < self.market_loss
+
+
+def market_summary(races: pd.DataFrame) -> MarketSummary | None:
+    """Model against Polymarket on the races that have saved odds."""
+    if "MarketWinnerLogLoss" not in races:
+        return None
+    both = races.dropna(subset=["MarketWinnerLogLoss"])
+    if both.empty:
+        return None
+    rows = [{"rnd": int(r["RoundNumber"]), "name": str(r["EventName"]).removesuffix(" Grand Prix"),
+             "model": chance(r["WinnerWinPct"]), "market": chance(r["MarketWinnerWinPct"]),
+             "better": bool(r["WinnerWinPct"] > r["MarketWinnerWinPct"])} for _, r in both.iterrows()]
+    return MarketSummary(len(both), int((both["WinnerWinPct"] > both["MarketWinnerWinPct"]).sum()),
+                         float(both["WinnerLogLoss"].mean()), float(both["MarketWinnerLogLoss"].mean()),
+                         float(both["WinnerWinPct"].mean()), float(both["MarketWinnerWinPct"].mean()), rows)
+
+
+@dataclass
 class Scorecard:
     races: pd.DataFrame
     calibration: pd.DataFrame
@@ -288,6 +334,7 @@ class Scorecard:
     beat: int
     live_beat: int
     live_count: int
+    market: MarketSummary | None = None
 
 
 def scorecard(year: int) -> Scorecard | None:
@@ -299,7 +346,8 @@ def scorecard(year: int) -> Scorecard | None:
     live = races[races["Live"]]
     return Scorecard(races, season_scores.podium_calibration(drivers_), heads, rows,
                      beat=int((races["Spearman"] > races["GridSpearman"]).sum()),
-                     live_beat=int((live["Spearman"] > live["GridSpearman"]).sum()), live_count=len(live))
+                     live_beat=int((live["Spearman"] > live["GridSpearman"]).sum()), live_count=len(live),
+                     market=market_summary(races))
 
 
 @dataclass
@@ -421,7 +469,8 @@ def load(predictions: list[tuple[int, int, pd.DataFrame]], entries: pd.DataFrame
     for year in sorted({s for s, _, _ in predictions}, reverse=True):
         season_entries = entries[entries["Season"] == year]
         ids = driver_ids(season_entries)
-        races = [race(year, rnd, pred, season_entries[season_entries["RoundNumber"] == rnd], ids)
+        races = [race(year, rnd, pred, season_entries[season_entries["RoundNumber"] == rnd], ids,
+                      market.load_market(year, rnd))
                  for s, rnd, pred in sorted(predictions, key=lambda p: p[1]) if s == year]
         seasons.append(Season(year, races, scorecard=scorecard(year)))
     seasons[0].next_race = next_race(seasons[0].year, seasons[0].latest.rnd, schedule)

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from f1pred import build, config, score
+from f1pred import build, config, market, score
 from f1pred.report import screenshot
 
 PODIUM_BINS = [0, 5, 20, 50, 80, 100]
@@ -19,7 +19,7 @@ def season_data(season: int) -> tuple[pd.DataFrame, pd.DataFrame]:
         if merged is None:
             continue
         live = score.is_pre_race(pred)
-        row = score.score_race(pred, actual)
+        row = score.score_race(pred, actual, market.load_market(s, rnd))
         races.append({"RoundNumber": rnd, "EventName": actual["EventName"].iloc[0], "Live": live, **row})
         drivers.append(merged.assign(RoundNumber=rnd, Live=live,
                                      OnPodium=merged["FinishPosition"].rank(method="first") <= 3))

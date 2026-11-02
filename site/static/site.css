@@ -65,6 +65,7 @@ h1 a:hover { color: #fff; }
 .verdict { display: flex; flex-wrap: wrap; gap: 4px 0; margin: 12px 0 0; padding: 12px 16px; background: var(--panel); border-left: 4px solid var(--red); font-weight: 600; }
 .verdict span + span::before { content: "·"; color: var(--ink-3); margin: 0 10px; }
 .verdict.pending { color: var(--ink-2); border-left-color: var(--line-2); }
+.market-line { margin: 2px 0 0; padding: 8px 16px; background: var(--panel); border-left: 4px solid var(--line-2); color: var(--ink-2); font-size: 14px; }
 .more { margin: 14px 0 0; font-weight: 600; }
 
 .tabs { display: none; gap: 2px; margin: 40px 0 0; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
@@ -103,6 +104,7 @@ td.delta .hit { margin-left: 0; }
 .move { color: var(--ink-3); font-size: 12px; margin-left: 4px; }
 .risk { color: var(--down); font-weight: 700; }
 td.better { color: var(--up); font-weight: 700; }
+tr.sum td { border-top: 1px solid var(--line-2); }
 
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
 .card { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px 16px; background: var(--panel); border-top: 4px solid var(--team, var(--line-2)); text-decoration: none; transition: background 150ms ease; }

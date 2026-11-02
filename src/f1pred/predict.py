@@ -4,7 +4,7 @@ from __future__ import annotations
 import fastf1
 import pandas as pd
 
-from f1pred import build, config, dnf, fetch, probabilities
+from f1pred import build, config, dnf, fetch, grid, probabilities
 from f1pred import model as ranker
 from f1pred.features import build_features
 
@@ -60,6 +60,23 @@ def describe_overrides(penalties: dict[str, int], pitlane: set[str], slots: dict
     return "Grid overrides: " + ", ".join(parts) if parts else ""
 
 
+def starting_grid(race: pd.DataFrame, season: int, rnd: int, penalties: dict[str, int], pitlane: set[str],
+                  slots: dict[str, int], auto_grid: bool = True) -> tuple[pd.Series, str]:
+    """Grid positions for the race and where they came from; manual overrides beat a fetched grid."""
+    if penalties or pitlane or slots:
+        return apply_grid_penalties(race, penalties, pitlane, slots), "manual"
+    current = race["GridPosition"]
+    if len(race) and current.notna().all():
+        return current, "official"
+    if not auto_grid or race.empty:
+        return current, "provisional"
+    event = fastf1.get_event(season, rnd)
+    fetched, source = grid.fetch(season, event["Country"], event["Location"], event["EventName"])
+    if not fetched:
+        return current, source
+    return race["Abbreviation"].map(fetched).astype(float), source
+
+
 def markdown_table(df: pd.DataFrame) -> str:
     header = "| " + " | ".join(df.columns) + " |"
     divider = "|" + "|".join("---" for _ in df.columns) + "|"
@@ -87,7 +104,7 @@ def guard_already_run(race: pd.DataFrame, season: int, rnd: int, backfill: bool)
 
 def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int] | None = None,
         pitlane: list[str] | None = None, backfill: bool = False,
-        slots: dict[str, int] | None = None) -> pd.DataFrame:
+        slots: dict[str, int] | None = None, auto_grid: bool = True) -> pd.DataFrame:
     rnd = resolve_round(season, event)
     if refresh:
         fetch.run([season], rounds=[rnd])
@@ -98,8 +115,8 @@ def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int]
     slots = slots or {}
     entries, laps, conditions = build.load_processed()
     target = (entries["Season"] == season) & (entries["RoundNumber"] == rnd)
-    if penalties or pitlane or slots:
-        entries.loc[target, "GridPosition"] = apply_grid_penalties(entries[target], penalties, pitlane, slots)
+    entries.loc[target, "GridPosition"], grid_source = starting_grid(
+        entries[target], season, rnd, penalties, pitlane, slots, auto_grid)
     feats = build_features(entries, laps, conditions)
     race = feats[(feats["Season"] == season) & (feats["RoundNumber"] == rnd)]
     if race.empty or race["QPosition"].isna().all():
@@ -130,12 +147,14 @@ def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int]
         PreRace=pre_race,
         PredictedAtUTC=pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d %H:%M:%S"),
         GridOverrides=overrides,
+        GridSource=grid_source,
         Temperature=temperature,
         CalibrationRaces=n_calibration,
         Warnings="; ".join(warnings),
     ).to_csv(stem.with_suffix(".csv"), index=False)
     summary = [f"# {event_name} {season}", "", headline(out), ""]
     summary += [] if pre_race else ["_Made after the race result was known (not counted by `score`)._", ""]
+    summary += [grid.LABELS[grid_source], ""]
     summary += [overrides, ""] if overrides else []
     summary += [f"> Warning: {w}" for w in warnings] + ([""] if warnings else [])
     summary += [markdown_table(out), "",
@@ -146,6 +165,7 @@ def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int]
           f"(probability temperature {temperature:.2f}, calibrated on {n_calibration} races)")
     for w in warnings:
         print(f"Warning: {w}")
+    print(grid.LABELS[grid_source])
     if overrides:
         print(overrides)
     print(headline(out))

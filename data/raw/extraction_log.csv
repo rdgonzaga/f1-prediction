@@ -554,7 +554,7 @@ SessionKey,Season,RoundNumber,EventName,SessionCode,Status,Source,Attempts,Resul
 2026_R19_FP3,2026,19,Mexico City Grand Prix,FP3,ERROR,,3,0,0,2026-11-02 06:03:59,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
 2026_R19_Q,2026,19,Mexico City Grand Prix,Q,DONE,official,3,22,0,2026-11-02 06:04:38,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com
 2026_R19_R,2026,19,Mexico City Grand Prix,R,DONE,official,3,22,0,2026-11-02 06:05:26,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com
-2026_R20_FP1,2026,20,São Paulo Grand Prix,FP1,ERROR,,3,0,0,2026-11-08 15:52:43,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
-2026_R20_FP2,2026,20,São Paulo Grand Prix,FP2,ERROR,,3,0,0,2026-11-08 15:53:17,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
-2026_R20_FP3,2026,20,São Paulo Grand Prix,FP3,ERROR,,3,0,0,2026-11-08 15:53:49,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
-2026_R20_Q,2026,20,São Paulo Grand Prix,Q,DONE,official,3,22,0,2026-11-08 15:54:25,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com
+2026_R20_FP1,2026,20,São Paulo Grand Prix,FP1,ERROR,,3,0,0,2026-11-08 16:09:23,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
+2026_R20_FP2,2026,20,São Paulo Grand Prix,FP2,ERROR,,3,0,0,2026-11-08 16:09:57,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
+2026_R20_FP3,2026,20,São Paulo Grand Prix,FP3,ERROR,,3,0,0,2026-11-08 16:10:29,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
+2026_R20_Q,2026,20,São Paulo Grand Prix,Q,DONE,official,3,22,0,2026-11-08 16:11:06,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com

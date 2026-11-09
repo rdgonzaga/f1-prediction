@@ -77,6 +77,8 @@ def build_conditions(weather: pd.DataFrame, track_status: pd.DataFrame) -> pd.Da
     cond = pre_race.groupby(RACE_KEYS).agg(
         WeekendRain=("Rainfall", "max"), TrackTempMean=("TrackTemp", "mean")).reset_index()
     cond["WeekendRain"] = cond["WeekendRain"].astype(float)
+    race_rain = weather[weather["SessionCode"] == "R"].groupby(RACE_KEYS)["Rainfall"].max().astype(float)
+    cond = cond.merge(race_rain.rename("RaceRain").reset_index(), on=RACE_KEYS, how="left")
 
     race_ts = track_status[track_status["SessionCode"] == "R"].copy()
     race_ts["SC"] = race_ts["Status"].astype(str).eq("4")

@@ -1,9 +1,11 @@
 """1200x630 link-preview image per race: the predicted podium, and the result once it's in."""
 from __future__ import annotations
 
+import hashlib
+import shutil
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, PngImagePlugin
 
 from f1pred.web import data
 
@@ -78,7 +80,39 @@ def render(race: data.Race) -> Image.Image:
     return img
 
 
-def save(race: data.Race, path: Path) -> Path:
+def _inputs(race: data.Race) -> str:
+    podium = [(r.pos, r.code, r.color, r.win, r.finish, r.finish_text) for r in race.podium]
+    verdict = race.verdict.lines[0] if race.verdict is not None else None
+    fav = (race.favourite.code, race.favourite.win)
+    parts = (race.season, race.rnd, race.name, race.live, podium, verdict, race.winner, fav)
+    return hashlib.sha1(repr(parts).encode()).hexdigest()
+
+
+def _unchanged(previous: Path | None, key: str) -> bool:
+    if previous is None or not previous.is_file():
+        return False
+    with Image.open(previous) as img:
+        return img.info.get("inputs") == key
+
+
+def save_png(img_fn, key: str, path: Path, previous: Path | None = None) -> Path:
+    """Write a PNG tagged with its inputs; reuse the previous file's bytes when they match.
+
+    PNG text rendering differs a little between machines, so comparing pixels would churn.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    render(race).save(path, "PNG", optimize=True)
+    if _unchanged(previous, key):
+        shutil.copyfile(previous, path)
+        return path
+    meta = PngImagePlugin.PngInfo()
+    meta.add_text("inputs", key)
+    img_fn().save(path, "PNG", optimize=True, pnginfo=meta)
     return path
+
+
+def save(race: data.Race, path: Path, previous: Path | None = None) -> Path:
+    return save_png(lambda: render(race), _inputs(race), path, previous)
+
+
+def save_icon(size: int, path: Path, previous: Path | None = None) -> Path:
+    return save_png(lambda: icon(size), f"icon-{size}", path, previous)

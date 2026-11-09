@@ -189,8 +189,10 @@ def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.Dat
     df["DrvDnfCareer"] = _prior_rolling(df, ["DriverId"], "Dnf", None)
     df["DrvH2HCareer"] = _prior_rolling(df, ["DriverId"], "BeatTeammate", None)
 
-    race_wet = df[RACE_KEYS].merge(conditions[RACE_KEYS + ["RaceRain"]], on=RACE_KEYS, how="left")["RaceRain"]
-    df["WetGain"] = df["Gain"].where(race_wet.fillna(0).to_numpy() > 0)
+    rain_cols = ["RaceRain"] if "RaceRain" in conditions else []
+    race_wet = df[RACE_KEYS].merge(conditions[RACE_KEYS + rain_cols], on=RACE_KEYS, how="left")
+    wet = race_wet["RaceRain"].fillna(0).to_numpy() > 0 if rain_cols else np.zeros(len(df), dtype=bool)
+    df["WetGain"] = df["Gain"].where(wet)
     df["DrvWetGain"] = _prior_rolling(df, ["DriverId"], "WetGain", None)
     df["DrvTrackGain"] = _prior_rolling(df, ["DriverId", "Location"], "Gain", 4)
 

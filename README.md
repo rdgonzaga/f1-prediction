@@ -6,9 +6,9 @@ Predicts an F1 race once qualifying is done: the finishing order, plus each driv
 winning, reaching the podium, scoring points, or retiring. Saves it as a web page you can open on
 your phone or send to someone.
 
-![Predicted order and win chances for the 2026 Spanish Grand Prix](docs/report-chart.png)
+![Predicted order against the result for the 2026 São Paulo Grand Prix](docs/site-result.png)
 
-![Win, podium, points and DNF chances for all 22 drivers](docs/report-table.png)
+![Win, podium, points and DNF chances for all 22 drivers](docs/site-field.png)
 
 ## What it's actually good at
 

@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import fastf1
 import pandas as pd
 
-from f1pred import config, official
+from f1pred import config, official, openf1
 
 LOG_COLUMNS = [
     "SessionKey", "Season", "RoundNumber", "EventName", "SessionCode",
@@ -128,7 +128,15 @@ def extract_official(job) -> dict[str, pd.DataFrame]:
     results = official.session_results(int(job.Season), job.SessionCode, job.Country, job.Location, job.EventName)
     for k, v in _meta(job).items():
         results[k] = v
-    return {"results": results}
+    tables = {"results": results}
+    try:
+        weather = openf1.session_weather(int(job.Season), job.SessionCode, job.Country, job.Location, job.EventName)
+        for k, v in _meta(job).items():
+            weather[k] = v
+        tables["weather"] = weather
+    except Exception as exc:
+        print(f"  no OpenF1 weather for {job.SessionKey}: {exc}")
+    return tables
 
 
 def extract_session(job) -> dict[str, pd.DataFrame]:

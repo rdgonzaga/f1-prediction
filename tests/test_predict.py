@@ -2,8 +2,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from f1pred import predict
 from f1pred.predict import (
     apply_grid_penalties, guard_already_run, guard_saved_prediction, headline, markdown_table, parse_penalties,
+    race_start_utc,
 )
 
 
@@ -77,6 +79,19 @@ def test_backfill_may_replace_a_backfill_or_a_missing_file(tmp_path):
     guard_saved_prediction(saved, already_run=True)
     pd.DataFrame({"PreRace": [True]}).to_csv(saved, index=False)
     guard_saved_prediction(saved, already_run=False)
+
+
+def test_race_start_utc(monkeypatch):
+    monkeypatch.setattr(predict.fastf1, "get_event",
+                        lambda s, r: {"Session5DateUtc": pd.Timestamp("2026-11-22 04:00:00")})
+    assert race_start_utc(2026, 21) == "2026-11-22 04:00:00"
+
+
+def test_race_start_utc_blank_when_schedule_unavailable(monkeypatch):
+    def boom(s, r):
+        raise ConnectionError
+    monkeypatch.setattr(predict.fastf1, "get_event", boom)
+    assert race_start_utc(2026, 21) == ""
 
 
 def test_markdown_table_and_headline():

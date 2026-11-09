@@ -102,6 +102,15 @@ def guard_already_run(race: pd.DataFrame, season: int, rnd: int, backfill: bool)
     return already_run
 
 
+def race_start_utc(season: int, rnd: int) -> str:
+    """Scheduled race start, or blank when the schedule can't be read."""
+    try:
+        start = pd.Timestamp(fastf1.get_event(season, rnd)["Session5DateUtc"])
+    except Exception:
+        return ""
+    return "" if pd.isna(start) else start.strftime("%Y-%m-%d %H:%M:%S")
+
+
 def guard_saved_prediction(csv_path, already_run: bool) -> None:
     """A backfill must not replace a live pre-race prediction that is already saved."""
     if already_run and csv_path.exists() and score.is_pre_race(pd.read_csv(csv_path)):
@@ -156,6 +165,7 @@ def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int]
         EventName=event_name,
         PreRace=pre_race,
         PredictedAtUTC=pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d %H:%M:%S"),
+        RaceStartUTC=race_start_utc(season, rnd),
         GridOverrides=overrides,
         GridSource=grid_source,
         Temperature=temperature,

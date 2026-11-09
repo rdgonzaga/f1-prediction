@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from f1pred.predict import (
-    apply_grid_penalties, guard_already_run, headline, markdown_table, parse_penalties,
+    apply_grid_penalties, guard_already_run, guard_saved_prediction, headline, markdown_table, parse_penalties,
 )
 
 
@@ -60,6 +60,23 @@ def test_backfill_overrides_the_refusal():
 def test_upcoming_race_passes_the_guard():
     race = pd.DataFrame({"FinishPosition": [np.nan, np.nan]})
     assert guard_already_run(race, 2026, 15, backfill=False) is False
+
+
+def test_backfill_refuses_to_overwrite_a_live_prediction(tmp_path):
+    saved = tmp_path / "2026_R20.csv"
+    pd.DataFrame({"PreRace": [True, True]}).to_csv(saved, index=False)
+    with pytest.raises(SystemExit) as error:
+        guard_saved_prediction(saved, already_run=True)
+    assert "2026_R20.csv" in str(error.value)
+
+
+def test_backfill_may_replace_a_backfill_or_a_missing_file(tmp_path):
+    saved = tmp_path / "2026_R20.csv"
+    guard_saved_prediction(saved, already_run=True)
+    pd.DataFrame({"PreRace": [False, False]}).to_csv(saved, index=False)
+    guard_saved_prediction(saved, already_run=True)
+    pd.DataFrame({"PreRace": [True]}).to_csv(saved, index=False)
+    guard_saved_prediction(saved, already_run=False)
 
 
 def test_markdown_table_and_headline():

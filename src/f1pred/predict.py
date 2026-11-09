@@ -4,7 +4,7 @@ from __future__ import annotations
 import fastf1
 import pandas as pd
 
-from f1pred import build, config, dnf, fetch, grid, probabilities
+from f1pred import build, config, dnf, fetch, grid, probabilities, score
 from f1pred import model as ranker
 from f1pred.features import build_features
 
@@ -102,6 +102,15 @@ def guard_already_run(race: pd.DataFrame, season: int, rnd: int, backfill: bool)
     return already_run
 
 
+def guard_saved_prediction(csv_path, already_run: bool) -> None:
+    """A backfill must not replace a live pre-race prediction that is already saved."""
+    if already_run and csv_path.exists() and score.is_pre_race(pd.read_csv(csv_path)):
+        raise SystemExit(
+            f"{csv_path.name} is a live pre-race prediction. Backfilling would overwrite it; "
+            f"move it aside first if you really want to."
+        )
+
+
 def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int] | None = None,
         pitlane: list[str] | None = None, backfill: bool = False,
         slots: dict[str, int] | None = None, auto_grid: bool = True) -> pd.DataFrame:
@@ -122,6 +131,7 @@ def run(season: int, event: str, refresh: bool = True, penalties: dict[str, int]
     if race.empty or race["QPosition"].isna().all():
         raise SystemExit(f"No qualifying data for {season} round {rnd} yet.")
     already_run = guard_already_run(race, season, rnd, backfill)
+    guard_saved_prediction(config.prediction_path(season, rnd, ".csv"), already_run)
 
     train = ranker.training_rows(feats[feats["RaceIdx"] < race["RaceIdx"].iloc[0]])
     pred = ranker.predict_order(ranker.fit(train, target_era=config.era_index(season)), race)

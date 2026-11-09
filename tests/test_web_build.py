@@ -116,3 +116,10 @@ def test_pages_carry_the_brand_and_home_leads_with_the_record(built):
     from PIL import Image
     with Image.open(built / "static" / "apple-touch-icon.png") as img:
         assert img.size == (180, 180)
+
+
+def test_rebuild_keeps_share_image_bytes_when_inputs_match(built):
+    path = built / "2026" / "round-02" / "share.png"
+    before = path.read_bytes()
+    web.build_site(built, schedule=lambda year: pd.DataFrame())
+    assert path.read_bytes() == before

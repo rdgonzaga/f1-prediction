@@ -200,7 +200,14 @@ def run(seasons: list[int], max_events: int | None = None, rounds: list[int] | N
     for (season, rnd), event_jobs in todo.groupby(["Season", "RoundNumber"], sort=False):
         for job in event_jobs.itertuples(index=False):
             status, source, error, attempts, tables = "ERROR", "", "", 0, {}
-            while attempts < config.MAX_RETRIES:
+            if job.SessionCode in official.PAGES and job.SessionKey not in from_official:
+                try:
+                    tables = extract_official(job)
+                    save_tables(job, tables)
+                    status, source, error = "DONE", "official", "formula1.com first; FastF1 fills laps later"
+                except Exception as exc:
+                    error = f"official: {type(exc).__name__}: {exc}"
+            while status == "ERROR" and attempts < config.MAX_RETRIES:
                 attempts += 1
                 try:
                     tables = extract_session(job)
@@ -216,7 +223,7 @@ def run(seasons: list[int], max_events: int | None = None, rounds: list[int] | N
                     elif attempts < config.MAX_RETRIES:
                         time.sleep(config.RETRY_SLEEP_SECONDS * attempts)
 
-            if status == "ERROR" and job.SessionCode in official.PAGES:
+            if status == "ERROR" and job.SessionCode in official.PAGES and job.SessionKey in from_official:
                 try:
                     tables = extract_official(job)
                     save_tables(job, tables)

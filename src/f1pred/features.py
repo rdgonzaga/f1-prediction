@@ -8,7 +8,7 @@ from f1pred import config
 
 RACE_KEYS = ["Season", "RoundNumber"]
 OUTCOME_COLS = ["FinishPosition", "Classified", "Status", "Points", "RaceLaps"]
-CONDITION_OUTCOME_COLS = ["SCCount", "VSCCount"]
+CONDITION_OUTCOME_COLS = ["SCCount", "VSCCount", "RaceRain"]
 DNF_CODES = {"R", "D", "E", "N", "F"}
 
 _GRID = ["Grid", "GridPitlane"]
@@ -38,6 +38,8 @@ PRACTICE_SESSIONS = ["FP1", "FP2", "FP3"]
 FORM_FEATURES = ["DrvFinishLast3", "DrvPointsLast5", "TeamBestFinishLast3", "TeamQPosLast3"]
 OOP_FEATURES = ["ExpectedRank", "OutOfPosition"]
 TRACK_FEATURES = ["GridXOvertaking", "OopXOvertaking", "GridXSafetyCar"]
+WET_FEATURES = ["DrvWetGain", "WetGainXRain"]
+DRV_TRACK_FEATURES = ["DrvTrackGain"]
 
 # Out-of-position pace and track interactions each improved 2024 and 2025 calibration; 2026 (11 races) was worse.
 FEATURES = QUALI_FEATURES + OOP_FEATURES + TRACK_FEATURES
@@ -61,6 +63,9 @@ FEATURE_SETS = {
     "quali_oop": QUALI_FEATURES + OOP_FEATURES,
     "quali_form_practice": QUALI_FEATURES + FORM_FEATURES + PRACTICE_FEATURES + OOP_FEATURES,
     "quali_oop_track": QUALI_FEATURES + OOP_FEATURES + TRACK_FEATURES,
+    "base_wet": FEATURES + WET_FEATURES,
+    "base_drvtrack": FEATURES + DRV_TRACK_FEATURES,
+    "base_wet_drvtrack": FEATURES + WET_FEATURES + DRV_TRACK_FEATURES,
 }
 
 
@@ -184,6 +189,11 @@ def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.Dat
     df["DrvDnfCareer"] = _prior_rolling(df, ["DriverId"], "Dnf", None)
     df["DrvH2HCareer"] = _prior_rolling(df, ["DriverId"], "BeatTeammate", None)
 
+    race_wet = df[RACE_KEYS].merge(conditions[RACE_KEYS + ["RaceRain"]], on=RACE_KEYS, how="left")["RaceRain"]
+    df["WetGain"] = df["Gain"].where(race_wet.fillna(0).to_numpy() > 0)
+    df["DrvWetGain"] = _prior_rolling(df, ["DriverId"], "WetGain", None)
+    df["DrvTrackGain"] = _prior_rolling(df, ["DriverId", "Location"], "Gain", 4)
+
     team_race = df.groupby(RACE_KEYS + ["RaceIdx", "TeamId"]).agg(
         BestFinish=("FinishPosition", "min"), MeanQPos=("QPosition", "mean")).reset_index()
     team_hist = _per_race_history(team_race, ["Season", "TeamId"], {
@@ -221,11 +231,12 @@ def build_features(entries: pd.DataFrame, laps: pd.DataFrame, conditions: pd.Dat
     df["GridXSafetyCar"] = df["Grid"] * df["TrkSCRate"]
 
     df = df.merge(conditions.drop(columns=CONDITION_OUTCOME_COLS, errors="ignore"), on=RACE_KEYS, how="left")
+    df["WetGainXRain"] = df["DrvWetGain"].fillna(0) * df["WeekendRain"]
     df["EraIndex"] = df["Season"].map(config.era_index)
     era_first_idx = df.groupby("EraIndex")["RaceIdx"].transform("min")
     df["RacesIntoEra"] = (df["RaceIdx"] - era_first_idx).astype(float)
 
     df = df.sort_values(["RaceIdx", "QPosition"]).reset_index(drop=True)
-    for col in ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES + PRACTICE_FEATURES + OOP_FEATURES + TRACK_FEATURES:
+    for col in ALL_FEATURES + PU_FEATURES + PENALTY_FEATURES + PRACTICE_FEATURES + OOP_FEATURES + TRACK_FEATURES + WET_FEATURES + DRV_TRACK_FEATURES:
         df[col] = pd.to_numeric(df[col], errors="coerce").astype(float)
     return df

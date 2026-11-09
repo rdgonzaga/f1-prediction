@@ -87,6 +87,26 @@ def build_conditions(weather: pd.DataFrame, track_status: pd.DataFrame) -> pd.Da
     return cond.merge(sc, on=RACE_KEYS, how="outer")
 
 
+def build_race_pace(laps: pd.DataFrame) -> pd.DataFrame:
+    """Race pace per driver as % slower than the teammate on clean green-flag laps (lower is faster)."""
+    if laps.empty:
+        return pd.DataFrame(columns=RACE_KEYS + ["Abbreviation", "RacePaceVsTm"])
+    race = laps[laps["SessionCode"] == "R"]
+    clean = race[
+        race["IsAccurate"].eq(True) & ~race["Deleted"].eq(True)
+        & race["PitInTimeSeconds"].isna() & race["PitOutTimeSeconds"].isna()
+        & race["TrackStatus"].astype(str).eq("1") & race["LapTimeSeconds"].notna() & race["LapNumber"].gt(1)
+    ]
+    keys = RACE_KEYS + ["Team", "Driver"]
+    med = clean.groupby(keys)["LapTimeSeconds"].agg(["median", "size"]).reset_index()
+    med = med[med["size"] >= 10]
+    grp = med.groupby(RACE_KEYS + ["Team"])["median"]
+    others = (grp.transform("sum") - med["median"]) / (grp.transform("count") - 1)
+    med["RacePaceVsTm"] = (med["median"] / others - 1) * 100
+    med = med[grp.transform("count") == 2]
+    return med.rename(columns={"Driver": "Abbreviation"})[RACE_KEYS + ["Abbreviation", "RacePaceVsTm"]]
+
+
 def build_laps(laps: pd.DataFrame) -> pd.DataFrame:
     laps = laps[laps["SessionCode"].isin(LAP_SESSIONS)]
     return laps[[c for c in LAP_COLS if c in laps.columns]].reset_index(drop=True)
@@ -154,7 +174,9 @@ def run() -> None:
     results = _read("results")
     entries = build_entries(results)
     conditions = build_conditions(_read("weather"), _read("track_status"))
-    laps = build_laps(_read("laps"))
+    raw_laps = _read("laps")
+    laps = build_laps(raw_laps)
+    entries = entries.merge(build_race_pace(raw_laps), on=RACE_KEYS + ["Abbreviation"], how="left")
 
     config.PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     entries.to_parquet(config.PROCESSED_DIR / "entries.parquet", index=False)

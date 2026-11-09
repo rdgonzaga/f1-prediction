@@ -1,22 +1,23 @@
 {% macro driver_link(row, root) %}<a href="{{ root }}drivers/{{ row.driver_id }}/">{{ row.code }}</a>{% endmacro %}
 
 {% macro tower(race, root) %}
+<p class="tower-key">Predicted is our order before the race. Actual is where they finished.
+  <span><i class="podium-key"></i>Podium</span><span><i class="points-key"></i>Points</span></p>
 <div class="scroller">
 <table class="tower">
-<thead><tr><th>Pred</th><th></th><th class="l">Driver</th><th>Win</th><th>Finish</th><th class="l"></th></tr></thead>
+<thead><tr><th>Predicted</th><th></th><th class="l">Driver</th><th>Actual</th><th class="l">vs prediction</th></tr></thead>
 <tbody>
 {% for row in race.rows %}
-<tr>
-  <td class="pos">{{ row.pos }}</td>
+<tr{% if row.classified and row.finish|int <= 3 %} class="hit-podium"{% elif row.classified and row.finish|int <= 10 %} class="hit-points"{% endif %}>
+  <td class="pos">P{{ row.pos }}</td>
   <td class="stripe" style="--team: {{ row.color }}"><i></i></td>
   <td class="drv">{{ driver_link(row, root) }}<span class="drv-team">{{ row.team }}</span></td>
-  <td class="num">{{ row.win|pct }}%</td>
-  <td class="num fin">{% if row.classified %}{{ row.finish }}{% elif row.finish %}<span class="out">{{ row.finish }}</span>{% else %}—{% endif %}</td>
+  <td class="num fin">{% if row.classified %}P{{ row.finish }}{% elif row.finish %}<span class="out">{{ row.finish }}</span>{% else %}—{% endif %}</td>
   <td class="l delta">
     {% if row.classified %}
-      {% if row.gain == 0 %}<span class="hit" title="Exact">✓</span>
-      {% elif row.gain > 0 %}<span class="up">▲{{ row.gain }}</span>
-      {% else %}<span class="down">▼{{ -row.gain }}</span>{% endif %}
+      {% if row.gain == 0 %}<span class="hit" title="Exact">✓ exact</span>
+      {% elif row.gain > 0 %}<span class="up">{{ row.gain }} {{ "place" if row.gain == 1 else "places" }} higher</span>
+      {% else %}<span class="down">{{ -row.gain }} {{ "place" if row.gain == -1 else "places" }} lower</span>{% endif %}
     {% endif %}
   </td>
 </tr>

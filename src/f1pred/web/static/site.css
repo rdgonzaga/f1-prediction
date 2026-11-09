@@ -84,7 +84,13 @@ th { padding: 0 10px 8px; border-bottom: 1px solid var(--line-2); color: var(--i
 td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
 th.l, td.l { text-align: left; }
 th.c { text-align: center; }
-.tower { max-width: 720px; }
+.tower { max-width: 760px; }
+.tower tr.hit-podium, .tower tr.hit-podium:hover { background: color-mix(in srgb, var(--hi) 16%, transparent); }
+.tower tr.hit-points, .tower tr.hit-points:hover { background: color-mix(in srgb, var(--up) 8%, transparent); }
+.tower-key { margin: 0 0 12px; color: var(--ink-3); font-size: 13px; }
+.tower-key i { display: inline-block; width: 12px; height: 12px; margin: 0 6px -1px 14px; }
+.tower-key .podium-key { background: color-mix(in srgb, var(--hi) 40%, transparent); }
+.tower-key .points-key { background: color-mix(in srgb, var(--up) 22%, transparent); }
 tbody tr:nth-child(odd) { background: var(--panel); }
 tbody tr:hover { background: var(--panel-2); }
 td a { text-decoration: none; }

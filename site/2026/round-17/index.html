@@ -76,218 +76,198 @@
 </div>
 <section class="panel" id="tab-result" role="tabpanel">
   <h2 class="section-title">Result vs prediction</h2>
-  <div class="scroller">
+  <p class="tower-key">Predicted is our order before the race. Actual is where they finished.
+  <span><i class="podium-key"></i>Podium</span><span><i class="points-key"></i>Points</span></p>
+<div class="scroller">
 <table class="tower">
-<thead><tr><th>Pred</th><th></th><th class="l">Driver</th><th>Win</th><th>Finish</th><th class="l"></th></tr></thead>
+<thead><tr><th>Predicted</th><th></th><th class="l">Driver</th><th>Actual</th><th class="l">vs prediction</th></tr></thead>
 <tbody>
-<tr>
-  <td class="pos">1</td>
+<tr class="hit-podium">
+  <td class="pos">P1</td>
   <td class="stripe" style="--team: #8582f7"><i></i></td>
   <td class="drv"><a href="../../drivers/max_verstappen/">VER</a><span class="drv-team">Red Bull Racing</span></td>
-  <td class="num">32.6%</td>
-  <td class="num fin">1</td>
+  <td class="num fin">P1</td>
   <td class="l delta">
-<span class="hit" title="Exact">✓</span>
+<span class="hit" title="Exact">✓ exact</span>
   </td>
 </tr>
-<tr>
-  <td class="pos">2</td>
+<tr class="hit-podium">
+  <td class="pos">P2</td>
   <td class="stripe" style="--team: #ef4c63"><i></i></td>
   <td class="drv"><a href="../../drivers/leclerc/">LEC</a><span class="drv-team">Ferrari</span></td>
-  <td class="num">22.4%</td>
-  <td class="num fin">2</td>
+  <td class="num fin">P2</td>
   <td class="l delta">
-<span class="hit" title="Exact">✓</span>
+<span class="hit" title="Exact">✓ exact</span>
   </td>
 </tr>
-<tr>
-  <td class="pos">3</td>
+<tr class="hit-podium">
+  <td class="pos">P3</td>
   <td class="stripe" style="--team: #27f4d2"><i></i></td>
   <td class="drv"><a href="../../drivers/antonelli/">ANT</a><span class="drv-team">Mercedes</span></td>
-  <td class="num">12.6%</td>
-  <td class="num fin">3</td>
+  <td class="num fin">P3</td>
   <td class="l delta">
-<span class="hit" title="Exact">✓</span>
+<span class="hit" title="Exact">✓ exact</span>
   </td>
 </tr>
-<tr>
-  <td class="pos">4</td>
+<tr class="hit-points">
+  <td class="pos">P4</td>
   <td class="stripe" style="--team: #ff8000"><i></i></td>
   <td class="drv"><a href="../../drivers/norris/">NOR</a><span class="drv-team">McLaren</span></td>
-  <td class="num">11.2%</td>
-  <td class="num fin">4</td>
+  <td class="num fin">P4</td>
   <td class="l delta">
-<span class="hit" title="Exact">✓</span>
+<span class="hit" title="Exact">✓ exact</span>
   </td>
 </tr>
-<tr>
-  <td class="pos">5</td>
+<tr class="hit-points">
+  <td class="pos">P5</td>
   <td class="stripe" style="--team: #ef4c63"><i></i></td>
   <td class="drv"><a href="../../drivers/hamilton/">HAM</a><span class="drv-team">Ferrari</span></td>
-  <td class="num">10.2%</td>
-  <td class="num fin">6</td>
+  <td class="num fin">P6</td>
   <td class="l delta">
-<span class="down">▼1</span>  </td>
+<span class="down">1 place lower</span>  </td>
 </tr>
-<tr>
-  <td class="pos">6</td>
+<tr class="hit-points">
+  <td class="pos">P6</td>
   <td class="stripe" style="--team: #27f4d2"><i></i></td>
   <td class="drv"><a href="../../drivers/russell/">RUS</a><span class="drv-team">Mercedes</span></td>
-  <td class="num">4.2%</td>
-  <td class="num fin">9</td>
+  <td class="num fin">P9</td>
   <td class="l delta">
-<span class="down">▼3</span>  </td>
+<span class="down">3 places lower</span>  </td>
 </tr>
-<tr>
-  <td class="pos">7</td>
+<tr class="hit-points">
+  <td class="pos">P7</td>
   <td class="stripe" style="--team: #ff8000"><i></i></td>
   <td class="drv"><a href="../../drivers/piastri/">PIA</a><span class="drv-team">McLaren</span></td>
-  <td class="num">4.1%</td>
-  <td class="num fin">5</td>
+  <td class="num fin">P5</td>
   <td class="l delta">
-<span class="up">▲2</span>
+<span class="up">2 places higher</span>
   </td>
 </tr>
 <tr>
-  <td class="pos">8</td>
+  <td class="pos">P8</td>
   <td class="stripe" style="--team: #ff87bc"><i></i></td>
   <td class="drv"><a href="../../drivers/gasly/">GAS</a><span class="drv-team">Alpine</span></td>
-  <td class="num">0.7%</td>
-  <td class="num fin">11</td>
+  <td class="num fin">P11</td>
   <td class="l delta">
-<span class="down">▼3</span>  </td>
+<span class="down">3 places lower</span>  </td>
 </tr>
-<tr>
-  <td class="pos">9</td>
+<tr class="hit-points">
+  <td class="pos">P9</td>
   <td class="stripe" style="--team: #8582f7"><i></i></td>
   <td class="drv"><a href="../../drivers/hadjar/">HAD</a><span class="drv-team">Red Bull Racing</span></td>
-  <td class="num">0.4%</td>
-  <td class="num fin">10</td>
+  <td class="num fin">P10</td>
   <td class="l delta">
-<span class="down">▼1</span>  </td>
+<span class="down">1 place lower</span>  </td>
 </tr>
 <tr>
-  <td class="pos">10</td>
+  <td class="pos">P10</td>
   <td class="stripe" style="--team: #fcd700"><i></i></td>
   <td class="drv"><a href="../../drivers/arvid_lindblad/">LIN</a><span class="drv-team">Racing Bulls</span></td>
-  <td class="num">0.4%</td>
-  <td class="num fin">15</td>
+  <td class="num fin">P15</td>
   <td class="l delta">
-<span class="down">▼5</span>  </td>
+<span class="down">5 places lower</span>  </td>
 </tr>
-<tr>
-  <td class="pos">11</td>
+<tr class="hit-points">
+  <td class="pos">P11</td>
   <td class="stripe" style="--team: #fcd700"><i></i></td>
   <td class="drv"><a href="../../drivers/lawson/">LAW</a><span class="drv-team">Racing Bulls</span></td>
-  <td class="num">0.3%</td>
-  <td class="num fin">7</td>
+  <td class="num fin">P7</td>
   <td class="l delta">
-<span class="up">▲4</span>
+<span class="up">4 places higher</span>
   </td>
 </tr>
-<tr>
-  <td class="pos">12</td>
+<tr class="hit-points">
+  <td class="pos">P12</td>
   <td class="stripe" style="--team: #ff6c4c"><i></i></td>
   <td class="drv"><a href="../../drivers/hulkenberg/">HUL</a><span class="drv-team">Audi</span></td>
-  <td class="num">0.2%</td>
-  <td class="num fin">8</td>
+  <td class="num fin">P8</td>
   <td class="l delta">
-<span class="up">▲4</span>
+<span class="up">4 places higher</span>
   </td>
 </tr>
 <tr>
-  <td class="pos">13</td>
+  <td class="pos">P13</td>
   <td class="stripe" style="--team: #ff87bc"><i></i></td>
   <td class="drv"><a href="../../drivers/colapinto/">COL</a><span class="drv-team">Alpine</span></td>
-  <td class="num">0.1%</td>
   <td class="num fin"><span class="out">DNF</span></td>
   <td class="l delta">
   </td>
 </tr>
 <tr>
-  <td class="pos">14</td>
+  <td class="pos">P14</td>
   <td class="stripe" style="--team: #b6babd"><i></i></td>
   <td class="drv"><a href="../../drivers/ocon/">OCO</a><span class="drv-team">Haas F1 Team</span></td>
-  <td class="num">0.1%</td>
-  <td class="num fin">13</td>
+  <td class="num fin">P13</td>
   <td class="l delta">
-<span class="up">▲1</span>
+<span class="up">1 place higher</span>
   </td>
 </tr>
 <tr>
-  <td class="pos">15</td>
+  <td class="pos">P15</td>
   <td class="stripe" style="--team: #b6babd"><i></i></td>
   <td class="drv"><a href="../../drivers/bearman/">BEA</a><span class="drv-team">Haas F1 Team</span></td>
-  <td class="num">0.1%</td>
-  <td class="num fin">12</td>
+  <td class="num fin">P12</td>
   <td class="l delta">
-<span class="up">▲3</span>
+<span class="up">3 places higher</span>
   </td>
 </tr>
 <tr>
-  <td class="pos">16</td>
+  <td class="pos">P16</td>
   <td class="stripe" style="--team: #00a0dd"><i></i></td>
   <td class="drv"><a href="../../drivers/sainz/">SAI</a><span class="drv-team">Williams</span></td>
-  <td class="num">0.1%</td>
-  <td class="num fin">14</td>
+  <td class="num fin">P14</td>
   <td class="l delta">
-<span class="up">▲2</span>
+<span class="up">2 places higher</span>
   </td>
 </tr>
 <tr>
-  <td class="pos">17</td>
+  <td class="pos">P17</td>
   <td class="stripe" style="--team: #ff6c4c"><i></i></td>
   <td class="drv"><a href="../../drivers/bortoleto/">BOR</a><span class="drv-team">Audi</span></td>
-  <td class="num">0.0%</td>
   <td class="num fin"><span class="out">DNF</span></td>
   <td class="l delta">
   </td>
 </tr>
 <tr>
-  <td class="pos">18</td>
+  <td class="pos">P18</td>
   <td class="stripe" style="--team: #4c948f"><i></i></td>
   <td class="drv"><a href="../../drivers/alonso/">ALO</a><span class="drv-team">Aston Martin</span></td>
-  <td class="num">0.0%</td>
-  <td class="num fin">16</td>
+  <td class="num fin">P16</td>
   <td class="l delta">
-<span class="up">▲2</span>
+<span class="up">2 places higher</span>
   </td>
 </tr>
 <tr>
-  <td class="pos">19</td>
+  <td class="pos">P19</td>
   <td class="stripe" style="--team: #7c7c7c"><i></i></td>
   <td class="drv"><a href="../../drivers/perez/">PER</a><span class="drv-team">Cadillac</span></td>
-  <td class="num">0.0%</td>
-  <td class="num fin">17</td>
+  <td class="num fin">P17</td>
   <td class="l delta">
-<span class="up">▲2</span>
+<span class="up">2 places higher</span>
   </td>
 </tr>
 <tr>
-  <td class="pos">20</td>
+  <td class="pos">P20</td>
   <td class="stripe" style="--team: #00a0dd"><i></i></td>
   <td class="drv"><a href="../../drivers/albon/">ALB</a><span class="drv-team">Williams</span></td>
-  <td class="num">0.0%</td>
-  <td class="num fin">18</td>
+  <td class="num fin">P18</td>
   <td class="l delta">
-<span class="up">▲2</span>
+<span class="up">2 places higher</span>
   </td>
 </tr>
 <tr>
-  <td class="pos">21</td>
+  <td class="pos">P21</td>
   <td class="stripe" style="--team: #7c7c7c"><i></i></td>
   <td class="drv"><a href="../../drivers/bottas/">BOT</a><span class="drv-team">Cadillac</span></td>
-  <td class="num">0.0%</td>
-  <td class="num fin">19</td>
+  <td class="num fin">P19</td>
   <td class="l delta">
-<span class="up">▲2</span>
+<span class="up">2 places higher</span>
   </td>
 </tr>
 <tr>
-  <td class="pos">22</td>
+  <td class="pos">P22</td>
   <td class="stripe" style="--team: #4c948f"><i></i></td>
   <td class="drv"><a href="../../drivers/stroll/">STR</a><span class="drv-team">Aston Martin</span></td>
-  <td class="num">0.0%</td>
   <td class="num fin"><span class="out">DNF</span></td>
   <td class="l delta">
   </td>

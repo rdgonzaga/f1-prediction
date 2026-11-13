@@ -1,6 +1,6 @@
 # f1-prediction
 
-Published as **Parc Fermé**, race odds locked after qualifying: https://rdgonzaga.github.io/f1-prediction/
+Published as **Parc Fermé**, race odds locked after qualifying: https://f1.raigon.dev/
 
 Predicts an F1 race once qualifying is done: the finishing order, plus each driver's chance of
 winning, reaching the podium, scoring points, or retiring. Saves it as a web page you can open on
@@ -100,7 +100,7 @@ in hindsight doesn't count when you score it. `--backfill` saves one anyway.
 
 ## The website
 
-Every prediction is up at https://rdgonzaga.github.io/f1-prediction/. The latest race leads with its
+Every prediction is up at https://f1.raigon.dev/. The latest race leads with its
 predicted podium and, once the race is done, how it went. There's also an archive of every race, a
 page per driver, the season scorecard and a plain-language explainer. `weekend` and `score` both rebuild `site/` when they finish, so after a
 race it's just:

@@ -26,7 +26,7 @@ def test_run_writes_a_standalone_page_and_asks_for_a_png(saved):
     assert path.name == "2026_R15.html" and saved == [path]
     assert page.startswith("<!doctype html>") and page.rstrip().endswith("</html>")
     assert "<style>" in page and "static/site.css" not in page and "static/site.js" not in page
-    assert 'href="https://rdgonzaga.github.io/f1-prediction/races/"' in page
+    assert 'href="https://f1.raigon.dev/races/"' in page
     assert "Azerbaijan Grand Prix" in page and "Predicted before the race" in page
     assert "VER +5" in page and "Result pending" in page
     assert "scorecard/" not in page

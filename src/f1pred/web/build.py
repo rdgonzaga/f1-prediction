@@ -14,7 +14,7 @@ from f1pred.web import charts, data, share
 
 WEB_DIR = Path(__file__).parent
 STATIC_DIR = WEB_DIR / "static"
-SITE_URL = "https://rdgonzaga.github.io/f1-prediction/"
+SITE_URL = "https://f1.raigon.dev/"
 
 
 def _pct(value: float | None, digits: int = 1) -> str:

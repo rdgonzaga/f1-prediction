@@ -131,3 +131,16 @@ def test_latest_feed_describes_the_newest_race(built):
     assert feed["round"] == 3 and feed["pending"] is True and feed["winner"] is None
     assert feed["url"] == web.SITE_URL + "2026/round-03/" and len(feed["podium"]) == 3
     assert feed["favourite"]["win"] > 0
+
+
+def test_live_record_averages_only_live_races():
+    races = pd.DataFrame({
+        "RoundNumber": [2, 1, 3], "EventName": ["Baku Grand Prix", "Old Grand Prix", "Monza Grand Prix"],
+        "Live": [True, False, True], "PodiumHitRate": [1.0, 0.0, 0.5], "GridPodiumHitRate": [0.5, 1.0, 0.5],
+        "Spearman": [0.8, 0.1, 0.6], "GridSpearman": [0.7, 0.9, 0.5], "WinnerHit": [1.0, 0.0, 0.0],
+        "GridWinnerHit": [1.0, 1.0, 1.0],
+    })
+    rec = web.live_record(type("Card", (), {"races": races})())
+    assert rec["races"] == 2 and rec["since"] == "Baku"
+    assert rec["podium"] == {"model": 75, "grid": 50} and rec["spearman"] == {"model": 0.7, "grid": 0.6}
+    assert rec["winner"] == {"model": 50, "grid": 100}

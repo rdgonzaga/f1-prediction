@@ -65,7 +65,9 @@ def build_site(out_dir: Path | None = None,
 
     try:
         _render_all(site, page, image)
-        (staging / "latest.json").write_text(json.dumps(latest_json(site.current.latest)), encoding="utf-8")
+        card = site.scorecard_season
+        feed = latest_json(site.current.latest, card.scorecard if card else None)
+        (staging / "latest.json").write_text(json.dumps(feed), encoding="utf-8")
     except Exception:
         shutil.rmtree(staging, ignore_errors=True)
         raise
@@ -78,7 +80,7 @@ def build_site(out_dir: Path | None = None,
     return out_dir
 
 
-def latest_json(race: data.Race) -> dict:
+def latest_json(race: data.Race, card: data.Scorecard | None = None) -> dict:
     """The newest race in a small feed, for other sites (raigon.dev) to show."""
     fav = race.favourite
     return {
@@ -86,6 +88,23 @@ def latest_json(race: data.Race) -> dict:
         "pending": race.pending, "favourite": {"code": fav.code, "win": round(fav.win, 1)},
         "podium": [r.code for r in race.podium], "winner": race.winner,
         "podium_called": None if race.verdict is None else race.verdict.podium_called,
+        "live": None if card is None else live_record(card),
+    }
+
+
+def live_record(card: data.Scorecard) -> dict | None:
+    """Model against the starting grid over the races predicted live."""
+    live = card.races[card.races["Live"]].sort_values("RoundNumber")
+    if live.empty:
+        return None
+    def mean(col: str, scale: int):
+        value = float(live[col].mean()) * scale
+        return round(value, 2) if scale == 1 else round(value)
+    return {
+        "races": len(live), "since": str(live.iloc[0]["EventName"]).removesuffix(" Grand Prix"),
+        "podium": {"model": mean("PodiumHitRate", 100), "grid": mean("GridPodiumHitRate", 100)},
+        "spearman": {"model": mean("Spearman", 1), "grid": mean("GridSpearman", 1)},
+        "winner": {"model": mean("WinnerHit", 100), "grid": mean("GridWinnerHit", 100)},
     }
 
 

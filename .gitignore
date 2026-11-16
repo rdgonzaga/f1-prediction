@@ -41,3 +41,4 @@ docs/superpowers/
 
 # runner log
 *.log
+!site/latest.json

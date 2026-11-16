@@ -1,6 +1,7 @@
 """Render the static site, and standalone pages, from saved predictions."""
 from __future__ import annotations
 
+import json
 import shutil
 from collections.abc import Callable
 from pathlib import Path
@@ -64,6 +65,7 @@ def build_site(out_dir: Path | None = None,
 
     try:
         _render_all(site, page, image)
+        (staging / "latest.json").write_text(json.dumps(latest_json(site.current.latest)), encoding="utf-8")
     except Exception:
         shutil.rmtree(staging, ignore_errors=True)
         raise
@@ -74,6 +76,17 @@ def build_site(out_dir: Path | None = None,
     print(f"Wrote the site to {out_dir} ({count} race pages, {len(site.drivers)} drivers). "
           f"Open index.html to check it.")
     return out_dir
+
+
+def latest_json(race: data.Race) -> dict:
+    """The newest race in a small feed, for other sites (raigon.dev) to show."""
+    fav = race.favourite
+    return {
+        "season": race.season, "round": race.rnd, "race": race.short_name, "url": SITE_URL + race.path,
+        "pending": race.pending, "favourite": {"code": fav.code, "win": round(fav.win, 1)},
+        "podium": [r.code for r in race.podium], "winner": race.winner,
+        "podium_called": None if race.verdict is None else race.verdict.podium_called,
+    }
 
 
 def _render_all(site: data.Site, page: Callable[..., None], image: Callable[[data.Race], None]) -> None:

@@ -1,3 +1,4 @@
+import json
 import re
 
 import pandas as pd
@@ -123,3 +124,10 @@ def test_rebuild_keeps_share_image_bytes_when_inputs_match(built):
     before = path.read_bytes()
     web.build_site(built, schedule=lambda year: pd.DataFrame())
     assert path.read_bytes() == before
+
+
+def test_latest_feed_describes_the_newest_race(built):
+    feed = json.loads((built / "latest.json").read_text(encoding="utf-8"))
+    assert feed["round"] == 3 and feed["pending"] is True and feed["winner"] is None
+    assert feed["url"] == web.SITE_URL + "2026/round-03/" and len(feed["podium"]) == 3
+    assert feed["favourite"]["win"] > 0

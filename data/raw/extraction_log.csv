@@ -544,22 +544,23 @@ SessionKey,Season,RoundNumber,EventName,SessionCode,Status,Source,Attempts,Resul
 2026_R17_R,2026,17,Singapore Grand Prix,R,DONE,fastf1,1,22,1240,2026-10-12 05:30:11,
 2026_R17_S,2026,17,Singapore Grand Prix,S,DONE,fastf1,1,22,314,2026-10-11 13:55:02,
 2026_R17_SQ,2026,17,Singapore Grand Prix,SQ,DONE,fastf1,1,22,286,2026-10-11 13:54:50,
-2026_R18_FP1,2026,18,United States Grand Prix,FP1,ERROR,,3,0,0,2026-11-02 05:58:51,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
-2026_R18_FP2,2026,18,United States Grand Prix,FP2,ERROR,,3,0,0,2026-11-02 05:59:28,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
-2026_R18_FP3,2026,18,United States Grand Prix,FP3,ERROR,,3,0,0,2026-11-02 06:00:00,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
-2026_R18_Q,2026,18,United States Grand Prix,Q,DONE,official,3,22,0,2026-11-02 06:00:49,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com
-2026_R18_R,2026,18,United States Grand Prix,R,DONE,official,3,22,0,2026-11-02 06:01:48,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com
-2026_R19_FP1,2026,19,Mexico City Grand Prix,FP1,ERROR,,3,0,0,2026-11-02 06:02:26,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
-2026_R19_FP2,2026,19,Mexico City Grand Prix,FP2,ERROR,,3,0,0,2026-11-02 06:03:14,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
-2026_R19_FP3,2026,19,Mexico City Grand Prix,FP3,ERROR,,3,0,0,2026-11-02 06:03:59,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
-2026_R19_Q,2026,19,Mexico City Grand Prix,Q,DONE,official,3,22,0,2026-11-02 06:04:38,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com
-2026_R19_R,2026,19,Mexico City Grand Prix,R,DONE,official,3,22,0,2026-11-02 06:05:26,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com
-2026_R20_FP1,2026,20,São Paulo Grand Prix,FP1,ERROR,,3,0,0,2026-11-09 03:05:24,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
-2026_R20_FP2,2026,20,São Paulo Grand Prix,FP2,ERROR,,3,0,0,2026-11-09 03:05:57,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
-2026_R20_FP3,2026,20,São Paulo Grand Prix,FP3,ERROR,,3,0,0,2026-11-09 03:06:32,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
-2026_R20_Q,2026,20,São Paulo Grand Prix,Q,DONE,official,3,22,0,2026-11-08 16:11:06,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com
-2026_R20_R,2026,20,São Paulo Grand Prix,R,DONE,official,0,22,0,2026-11-09 03:12:43,official first
-2026_R21_FP1,2026,21,Las Vegas Grand Prix,FP1,ERROR,,3,0,0,2026-11-21 06:01:08,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
-2026_R21_FP2,2026,21,Las Vegas Grand Prix,FP2,ERROR,,3,0,0,2026-11-21 06:01:42,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
-2026_R21_FP3,2026,21,Las Vegas Grand Prix,FP3,ERROR,,3,0,0,2026-11-21 06:02:16,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
-2026_R21_Q,2026,21,Las Vegas Grand Prix,Q,DONE,official,0,22,0,2026-11-21 06:02:26,formula1.com first; FastF1 fills laps later
+2026_R18_FP1,2026,18,United States Grand Prix,FP1,ERROR,,3,0,0,2026-11-22 07:01:37,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
+2026_R18_FP2,2026,18,United States Grand Prix,FP2,ERROR,,3,0,0,2026-11-22 07:02:51,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
+2026_R18_FP3,2026,18,United States Grand Prix,FP3,ERROR,,3,0,0,2026-11-22 07:03:36,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
+2026_R18_Q,2026,18,United States Grand Prix,Q,DONE,official,3,22,0,2026-11-22 07:04:30,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com
+2026_R18_R,2026,18,United States Grand Prix,R,DONE,official,3,22,0,2026-11-22 07:06:26,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com
+2026_R19_FP1,2026,19,Mexico City Grand Prix,FP1,ERROR,,3,0,0,2026-11-22 07:07:24,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
+2026_R19_FP2,2026,19,Mexico City Grand Prix,FP2,ERROR,,3,0,0,2026-11-22 07:08:05,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
+2026_R19_FP3,2026,19,Mexico City Grand Prix,FP3,ERROR,,3,0,0,2026-11-22 07:08:59,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
+2026_R19_Q,2026,19,Mexico City Grand Prix,Q,DONE,official,3,22,0,2026-11-22 07:09:44,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com
+2026_R19_R,2026,19,Mexico City Grand Prix,R,DONE,official,3,22,0,2026-11-22 08:11:09,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com
+2026_R20_FP1,2026,20,São Paulo Grand Prix,FP1,ERROR,,3,0,0,2026-11-22 08:11:46,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
+2026_R20_FP2,2026,20,São Paulo Grand Prix,FP2,ERROR,,3,0,0,2026-11-22 08:12:23,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
+2026_R20_FP3,2026,20,São Paulo Grand Prix,FP3,ERROR,,3,0,0,2026-11-22 08:13:04,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
+2026_R20_Q,2026,20,São Paulo Grand Prix,Q,DONE,official,3,22,0,2026-11-22 08:13:51,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com
+2026_R20_R,2026,20,São Paulo Grand Prix,R,DONE,official,3,22,0,2026-11-22 08:14:40,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com
+2026_R21_FP1,2026,21,Las Vegas Grand Prix,FP1,ERROR,,3,0,0,2026-11-22 08:15:16,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
+2026_R21_FP2,2026,21,Las Vegas Grand Prix,FP2,ERROR,,3,0,0,2026-11-22 08:16:02,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
+2026_R21_FP3,2026,21,Las Vegas Grand Prix,FP3,ERROR,,3,0,0,2026-11-22 08:16:41,DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`
+2026_R21_Q,2026,21,Las Vegas Grand Prix,Q,DONE,official,3,22,0,2026-11-22 08:18:03,FastF1 failed (DataNotLoadedError: The data you are trying to access has not been loaded yet. See `Session.load`); used formula1.com
+2026_R21_R,2026,21,Las Vegas Grand Prix,R,DONE,official,0,22,0,2026-11-22 08:18:09,formula1.com first; FastF1 fills laps later
